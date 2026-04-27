@@ -58,7 +58,7 @@ function CourseCatalog() {
       <div
         className="w-64 p-6 border-r hidden md:block"
         style={{
-          background: "var(--code-bg)",
+          background: "#f8fafc",
           borderColor: "var(--border)",
         }}
       >
@@ -71,7 +71,7 @@ function CourseCatalog() {
           placeholder="Search..."
           className="w-full mb-4 p-2 rounded border"
           style={{
-            background: "var(--code-bg)",
+            background: "#f8fafc",
             color: "var(--text)",
             borderColor: "var(--border)",
           }}
@@ -90,7 +90,7 @@ function CourseCatalog() {
         </div>
       </div>
 
-      <div className="flex-1 p-6" style={{ background: "var(--bg)" }}>
+      <div className="flex-1 p-6" style={{ background: "#f8fafc" }}>
         <h1
           className="text-3xl font-bold mb-6"
           style={{ color: "var(--text-h)" }}
@@ -105,7 +105,7 @@ function CourseCatalog() {
               key={course.id}
               className="p-4 rounded-xl border shadow transition hover:scale-[1.02]"
               style={{
-                background: "var(--code-bg)",
+                background: "#ffffff",
                 borderColor: "var(--border)",
               }}
             >

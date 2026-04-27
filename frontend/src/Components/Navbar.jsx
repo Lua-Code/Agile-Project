@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 
 
-export default function Navbar() {
+export default function Navbar({ toggleSidebar }) {
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
@@ -33,8 +33,8 @@ export default function Navbar() {
       <div className="w-full px-6 mx-auto py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Menu className="h-5 w-5 text-[#1d3557] hover:text-[#457b9d] cursor-pointer " />
-            <Link to="/dashboard" className="text-[#1d3557] text-lg font-bold">
+            <Menu className="h-5 w-5 text-[#1d3557] hover:text-[#457b9d] cursor-pointer " onClick = {toggleSidebar} />
+            <Link to="/dashboard" className="text-[#1d3557] text-2xl font-bold">
               myPortal
             </Link>
             <div className="hidden md:flex items-center gap-6">
@@ -67,3 +67,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+

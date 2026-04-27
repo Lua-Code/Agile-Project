@@ -35,7 +35,11 @@ const courseSchema = new mongoose.Schema({
     type: String,
     enum: ["active", "inactive"],
     default: "active"
-  }
+  },
+  prerequisites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Course"
+  }]
 });
 
 export default mongoose.model("Course", courseSchema);

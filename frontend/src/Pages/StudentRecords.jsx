@@ -36,20 +36,6 @@ function StudentRecords() {
 
   return (
     <div style={styles.page}>
-      <aside style={styles.sidebar}>
-        <h2 style={styles.logo}>FIS</h2>
-
-        <nav style={styles.nav}>
-          <a style={styles.link} href="/dashboard">Dashboard</a>
-          <a style={styles.activeLink}>StudentRecords</a>
-          <a style={styles.link}>Courses</a>
-          <a style={styles.link}>Rooms</a>
-          <a style={styles.link}>Enrollments</a>
-          <a style={styles.link}>Reports</a>
-        </nav>
-
-        <button style={styles.logout}>Logout</button>
-      </aside>
 
       <main style={styles.main}>
         <header style={styles.header}>

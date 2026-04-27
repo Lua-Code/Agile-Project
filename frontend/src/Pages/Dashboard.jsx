@@ -6,21 +6,7 @@ function Dashboard() {
   const { logout } = useLogout();
   return (
     <div style={styles.page}>
-      <aside style={styles.sidebar}>
-        <h2 style={styles.logo}>FIS</h2>
-
-        <nav style={styles.nav}>
-          <a style={styles.activeLink}>Dashboard</a>
-          <a style={styles.link}>Students</a>
-          <a style={styles.link}>Courses</a>
-          <a style={styles.link}>Rooms</a>
-          <a style={styles.link}>Enrollments</a>
-          <a style={styles.link}>Reports</a>
-        </nav>
-
-        <button style={styles.logout} onClick={logout}>Logout</button>
-      </aside>
-
+      
       <main style={styles.main}>
         <header style={styles.header}>
           <div>
