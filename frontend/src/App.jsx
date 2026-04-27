@@ -14,6 +14,7 @@ import CreateCourse from "./Pages/CreateCourse";
 
 
 //LAYOUTS AND HOOKS
+import Transcripts from "./Pages/Transcripts";
 import { useAuthContext } from "./hooks/useAuthContext";
 import MainLayout from "./Layouts/MainLayout";
 
