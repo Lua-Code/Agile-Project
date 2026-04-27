@@ -46,21 +46,6 @@ function Transcripts() {
 
   return (
     <div style={styles.page}>
-      <aside style={styles.sidebar}>
-        <h2 style={styles.logo}>FIS</h2>
-
-        <nav style={styles.nav}>
-          <Link to="/dashboard" style={styles.link}>Dashboard</Link>
-          <Link to="/students" style={styles.link}>Students</Link>
-          <span style={styles.link}>Courses</span>
-          <span style={styles.link}>Rooms</span>
-          <span style={styles.link}>Enrollments</span>
-          <span style={styles.activeLink}>Transcripts</span>
-          <span style={styles.link}>Reports</span>
-        </nav>
-
-        <button style={styles.logout}>Logout</button>
-      </aside>
 
       <main style={styles.main}>
         <section style={styles.header}>
