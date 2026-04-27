@@ -1,4 +1,9 @@
+import { useAuthContext } from "../hooks/useAuthContext";
+import { useLogout } from "../hooks/useLogout";
+
 function Dashboard() {
+  const { user } = useAuthContext();
+  const { logout } = useLogout();
   return (
     <div style={styles.page}>
       <aside style={styles.sidebar}>
@@ -13,7 +18,7 @@ function Dashboard() {
           <a style={styles.link}>Reports</a>
         </nav>
 
-        <button style={styles.logout}>Logout</button>
+        <button style={styles.logout} onClick={logout}>Logout</button>
       </aside>
 
       <main style={styles.main}>
@@ -24,10 +29,10 @@ function Dashboard() {
           </div>
 
           <div style={styles.profile}>
-            <div style={styles.avatar}>A</div>
+            <div style={styles.avatar}>{user?.fullName?.charAt(0).toUpperCase()}</div>
             <div>
-              <p style={styles.adminName}>Admin</p>
-              <p style={styles.role}>System Manager</p>
+              <p style={styles.adminName}>{user?.fullName}</p>
+              <p style={styles.role}>{user?.role}</p>
             </div>
           </div>
         </header>

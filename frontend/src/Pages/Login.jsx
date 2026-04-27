@@ -1,17 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLogin } from "../hooks/useLogin";
+import { useAuthContext } from "../hooks/useAuthContext";
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { login, isLoading, error } = useLogin();
+  const { user } = useAuthContext();
+  const navigate = useNavigate();
 
-  function handleSubmit(e) {
-  e.preventDefault();
+  useEffect(() => {
+    if (user) navigate("/dashboard");
+  }, [user, navigate]);
 
-  //this will be real authentication laterrrrrrrrrrrrrrrrrrrrrrrrrr
-  if (email && password) {
-    navigate("/dashboard");
+  async function handleSubmit(e) {
+    e.preventDefault();
+    await login(email, password);
   }
-}
 
   return (
     <div style={styles.page}>
@@ -50,8 +56,10 @@ function Login() {
           required
         />
 
-        <button style={styles.button} type="submit">
-          Login
+        {error && <p style={styles.error}>{error}</p>}
+
+        <button style={styles.button} type="submit" disabled={isLoading}>
+          {isLoading ? "Logging in..." : "Login"}
         </button>
 
         <p style={styles.footerText}>
@@ -171,6 +179,13 @@ const styles = {
     color: "#2563eb",
     fontWeight: "700",
     cursor: "pointer",
+  },
+
+  error: {
+    color: "#ef4444",
+    fontSize: "14px",
+    marginBottom: "8px",
+    textAlign: "center",
   },
 };
 
