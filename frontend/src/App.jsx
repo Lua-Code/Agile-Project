@@ -1,31 +1,24 @@
-//LIBS
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
-//LAYOUTS
-import MainLayout from "./Layouts/MainLayout";
-import AuthLayout from "./Layouts/AuthLayout";
-
-//PAGES
-import CourseCatalog from "./Pages/CourseCatalog";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./Pages/Login";
 import Dashboard from "./Pages/Dashboard";
+import StudentRecords from "./Pages/StudentRecords";
+import { useAuthContext } from "./hooks/useAuthContext";
+
+function PrivateRoute({ children }) {
+  const { user } = useAuthContext();
+  return user ? children : <Navigate to="/" />;
+}
 
 function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/courses" element={<CourseCatalog />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-
-        </Route>
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
-          {/*<Route path="/register" element={<RegisterPage />} /> */}
-        </Route>
+        <Route path="/" element={<Login />} />
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/StudentRecords" element={<PrivateRoute><StudentRecords /></PrivateRoute>} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
 
-export default App
+export default App;
