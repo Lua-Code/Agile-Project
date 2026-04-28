@@ -1,20 +1,41 @@
 import express from "express";
 import cors from "cors";
-import authRoutes from "./routes/authRoutes.js";
+import cookieParser from "cookie-parser";
+import session from "express-session";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+import routes from "./routes/index.js";
 import errorHandler from "./middleware/errorMiddleware.js";
 
 const app = express();
 
-//Middlewarte stuff
-app.use(cors());
-app.use(express.json()); 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
-//Route stuff
-app.get("/", (req, res) => {
-  res.send("API is running...");
-});
+app.use(express.json());
+app.use(cookieParser());
 
-app.use("/api/auth", authRoutes);
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 24,
+    },
+  })
+);
+
+app.use("/api", routes);
 
 app.use(errorHandler);
 
