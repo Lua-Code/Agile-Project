@@ -46,7 +46,6 @@ function CourseCatalog() {
     <div style={styles.page}>
       <main style={styles.main}>
         
-        {/* Header */}
         <header style={styles.header}>
           <div>
             <h1 style={styles.title}>Course Catalog</h1>
