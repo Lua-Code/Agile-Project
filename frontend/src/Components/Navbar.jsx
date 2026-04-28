@@ -1,39 +1,19 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, User, Menu,Send, Store, Settings } from "lucide-react";
+import { Bell, User, Menu, Send, Store, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
-
+import { useLogout } from "../hooks/useLogout";
 
 
 export default function Navbar({ toggleSidebar }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { logout } = useLogout();
   const navigate = useNavigate();
-
-
-  const handleLogout = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        setCurrentUser(null);
-        navigate("/login");
-      } else {
-        console.error("Logout failed");
-      }
-    } catch (err) {
-      console.error("Error logging out:", err);
-    }
-  };
-
 
   return (
     <nav className="border-b border-gray-200 bg-[#e0e1dd] sticky top-0 z-50 shadow-sm">
       <div className="w-full px-6 mx-auto py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Menu className="h-5 w-5 text-[#1d3557] hover:text-[#457b9d] cursor-pointer " onClick = {toggleSidebar} />
+            <Menu className="h-5 w-5 text-[#1d3557] hover:text-[#457b9d] cursor-pointer " onClick={toggleSidebar} />
             <Link to="/dashboard" className="text-[#1d3557] text-2xl font-bold">
               myPortal
             </Link>
@@ -46,17 +26,20 @@ export default function Navbar({ toggleSidebar }) {
             <Bell className="h-5 w-5 text-[#1d3557] hover:text-[#457b9d] cursor-pointer" />
 
             <Link
-            to="/profile"
-            className="text-[#1d3557] hover:text-[#457b9d] cursor-pointer">
-              <User className="h-5 w-5 hover:text-[#457b9d]"  />
+              to="/profile"
+              className="text-[#1d3557] hover:text-[#457b9d] cursor-pointer">
+              <User className="h-5 w-5 hover:text-[#457b9d]" />
             </Link>
 
-              <button
-                onClick={handleLogout}
-                className="bg-[#457b9d] hover:bg-[#1d3557] text-white px-4 py-2 rounded font-medium cursor-pointer"
-              >
-                Log Out
-              </button>
+            <button
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+              className="bg-[#457b9d] hover:bg-[#1d3557] text-white px-4 py-2 rounded font-medium cursor-pointer"
+            >
+              Log Out
+            </button>
 
             <button className="md:hidden text-[#1d3557]">
               <Menu className="h-5 w-5" />

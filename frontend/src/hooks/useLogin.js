@@ -12,10 +12,17 @@ export const useLogin = () => {
     setError(null);
 
     try {
-      const { data } = await api.post("/auth/login", { email, password });
+      const { data } = await api.post(
+        "/auth/login",
+        { email, password },
+        { withCredentials: true }
+      );
 
-      localStorage.setItem("user", JSON.stringify(data));
-      dispatch({ type: "LOGIN", payload: data });
+      dispatch({
+        type: "LOGIN",
+        payload: data.user,
+      });
+
     } catch (err) {
       setError(err.response?.data?.message || "Invalid email or password");
     } finally {

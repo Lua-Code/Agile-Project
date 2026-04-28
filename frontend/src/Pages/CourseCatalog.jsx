@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function CourseCatalog() {
   const [courses] = useState([
@@ -30,6 +31,7 @@ function CourseCatalog() {
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
+  const navigate = useNavigate();
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch = course.name
@@ -54,7 +56,9 @@ function CourseCatalog() {
             </p>
           </div>
 
-          <button style={styles.addButton}>+ Add Course</button>
+          <button style={styles.addButton} onClick = {() => navigate("/create-courses")}>
+            + Add Course
+          </button>
         </header>
 
         <section style={styles.toolbar}>
