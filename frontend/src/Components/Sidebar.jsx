@@ -23,7 +23,7 @@ export default function Sidebar({ isOpen }) {
                     </NavLink>
 
                     <NavLink to="/students" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        Students
+                        Student Records
                     </NavLink>
 
                     <NavLink to="/courses" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>

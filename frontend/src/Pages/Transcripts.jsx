@@ -268,27 +268,28 @@ const styles = {
     width: "100%",
     borderCollapse: "collapse",
   },
-  th: {
-    textAlign: "left",
+    th: {
+    textAlign: "center",
     padding: "16px",
     color: "#475569",
     borderBottom: "1px solid #e2e8f0",
-    fontSize: "14px",
   },
+
   td: {
     padding: "16px",
     borderBottom: "1px solid #e2e8f0",
-    color: "#334155",
-    fontSize: "15px",
+    textAlign: "center",
   },
+
   status: {
-    padding: "6px 12px",
-    borderRadius: "999px",
-    fontWeight: "700",
-    fontSize: "13px",
-  },
+  padding: "6px 12px",
+  borderRadius: "999px",
+  fontWeight: "700",
+  fontSize: "13px",
+  display: "inline-block",
+},
   viewButton: {
-    padding: "8px 12px",
+    padding: "4px 12px",
     borderRadius: "8px",
     border: "none",
     background: "#dbeafe",
@@ -298,13 +299,14 @@ const styles = {
     marginRight: "8px",
   },
   downloadButton: {
-    padding: "8px 12px",
+    padding: "4px 12px",
     borderRadius: "8px",
     border: "none",
     background: "#e0f2fe",
     color: "#0369a1",
     fontWeight: "700",
     cursor: "pointer",
+    margin: "4px",
   },
 };
 

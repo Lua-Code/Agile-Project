@@ -23,7 +23,7 @@ function Login() {
     <div style={styles.page}>
       <div style={styles.header}>
         <h1 style={styles.heading}>Welcome Back</h1>
-        <p style={styles.subtext}>Login to access the FIS</p>
+        <p style={styles.subtext}>Login to access the myPortal</p>
       </div>
 
       <form onSubmit={handleSubmit} style={styles.card}>

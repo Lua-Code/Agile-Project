@@ -230,18 +230,16 @@ const styles = {
   },
 
   th: {
-    textAlign: "left",
+    textAlign: "center",
     padding: "16px",
     color: "#475569",
     borderBottom: "1px solid #e2e8f0",
-    fontSize: "14px",
   },
 
   td: {
     padding: "16px",
     borderBottom: "1px solid #e2e8f0",
-    color: "#334155",
-    fontSize: "15px",
+    textAlign: "center",
   },
 
   status: {
@@ -249,6 +247,7 @@ const styles = {
     borderRadius: "999px",
     fontWeight: "700",
     fontSize: "13px",
+    display: "inline-block",
   },
 
   editButton: {

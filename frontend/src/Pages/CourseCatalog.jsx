@@ -26,136 +26,253 @@ function CourseCatalog() {
       professor: "Dr. John",
       schedule: "Sun/Tue • 3:00–5:00",
     },
-        {
-      id: 1,
-      code: "CS101",
-      name: "Intro to Computer Science",
-      type: "Core",
-      professor: "Dr. Smith",
-      schedule: "Mon/Wed • 10:00–12:00",
-    },
-    {
-      id: 2,
-      code: "CS202",
-      name: "Data Structures",
-      type: "Core",
-      professor: "Dr. Ali",
-      schedule: "Tue/Thu • 12:00–2:00",
-    },
-    {
-      id: 3,
-      code: "CS305",
-      name: "AI Fundamentals",
-      type: "Elective",
-      professor: "Dr. John",
-      schedule: "Sun/Tue • 3:00–5:00",
-    },
   ]);
 
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All");
+
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch = course.name
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    const matchesType =
+      typeFilter === "All" || course.type === typeFilter;
+
+    return matchesSearch && matchesType;
+  });
+
   return (
-    <div className="flex min-h-screen">
+    <div style={styles.page}>
+      <main style={styles.main}>
+        
+        {/* Header */}
+        <header style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Course Catalog</h1>
+            <p style={styles.subtitle}>
+              Browse and manage all available courses
+            </p>
+          </div>
 
-      <div
-        className="w-64 p-6 border-r hidden md:block"
-        style={{
-          background: "#f8fafc",
-          borderColor: "var(--border)",
-        }}
-      >
-        <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-h)" }}>
-          Filters
-        </h2>
+          <button style={styles.addButton}>+ Add Course</button>
+        </header>
 
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-full mb-4 p-2 rounded border"
-          style={{
-            background: "#f8fafc",
-            color: "var(--text)",
-            borderColor: "var(--border)",
-          }}
-        />
+        <section style={styles.toolbar}>
+          <div style={styles.toolbarRow}>
+            
+            <input
+              style={styles.search}
+              type="text"
+              placeholder="Search course..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
 
-        <div className = "text-left ml-6">
-          <h3 className="text-sm mb-2 font-bold" style={{ color: "var(--text)" }}>
-            Type
-          </h3>
-          <label className="block text-sm">
-            <input type="checkbox" className="mr-2" /> Core
-          </label>
-          <label className="block text-sm">
-            <input type="checkbox" className="mr-2" /> Elective
-          </label>
-        </div>
-      </div>
+            <select
+              style={styles.select}
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="All">All Types</option>
+              <option value="Core">Core</option>
+              <option value="Elective">Elective</option>
+            </select>
 
-      <div className="flex-1 p-6" style={{ background: "#f8fafc" }}>
-        <h1
-          className="text-3xl font-bold mb-6"
-          style={{ color: "var(--text-h)" }}
-        >
-          Course Catalog
-        </h1>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8">
-
-          {courses.map((course) => (
-            <div
-              key={course.id}
-              className="p-4 rounded-xl border shadow transition hover:scale-[1.02]"
-              style={{
-                background: "#ffffff",
-                borderColor: "var(--border)",
+            <button
+              style={styles.resetButton}
+              onClick={() => {
+                setSearch("");
+                setTypeFilter("All");
               }}
             >
-              <div className="flex justify-between items-center mb-2">
-                <h2
-                  className="text-lg font-semibold"
-                  style={{ color: "var(--text-h)" }}
-                >
-                  {course.code + ": " + course.name}
-                </h2>
+              Reset
+            </button>
 
-                <span
-                  className="text-xs px-2 py-1 rounded"
-                  style={{
-                    background: "var(--accent)",
-                    color: "var(--bg)",
-                  }}
-                >
-                  {course.type}
-                </span>
-              </div>
+          </div>
+        </section>
 
-              <p className="text-sm mb-2" style={{ color: "var(--text)" }}>
-                {course.name}
-              </p>
+        <section style={styles.tableCard}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Code</th>
+                <th style={styles.th}>Course Name</th>
+                <th style={styles.th}>Type</th>
+                <th style={styles.th}>Professor</th>
+                <th style={styles.th}>Schedule</th>
+                <th style={styles.th}>Actions</th>
+              </tr>
+            </thead>
 
-              <p className="text-xs mb-1" style={{ color: "var(--text)" }}>
-                {course.professor}
-              </p>
+            <tbody>
+              {filteredCourses.map((course) => (
+                <tr key={course.id}>
+                  <td style={styles.td}>{course.code}</td>
+                  <td style={styles.td}>{course.name}</td>
 
-              <p className="text-xs mb-4" style={{ color: "var(--text)" }}>
-                {course.schedule}
-              </p>
+                  <td style={styles.td}>
+                    <span
+                      style={{
+                        ...styles.status,
+                        background:
+                          course.type === "Core" ? "#dbeafe" : "#fef3c7",
+                        color:
+                          course.type === "Core" ? "#1d4ed8" : "#92400e",
+                      }}
+                    >
+                      {course.type}
+                    </span>
+                  </td>
 
-              <button
-                className="w-full py-2 mt-5 rounded transition"
-                style={{
-                  background: "var(--accent)",
-                  color: "var(--bg)",
-                }}
-              >
-                Enroll
-              </button>
-            </div>
-          ))}
+                  <td style={styles.td}>{course.professor}</td>
+                  <td style={styles.td}>{course.schedule}</td>
 
-        </div>
-      </div>
+                  <td style={styles.td}>
+                    <button style={styles.editButton}>Edit</button>
+                    <button style={styles.deleteButton}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+      </main>
     </div>
   );
 }
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    display: "flex",
+    background: "#f8fafc",
+    fontFamily: "Arial, sans-serif",
+  },
+
+  main: {
+    flex: 1,
+    padding: "36px",
+  },
+
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "28px",
+  },
+
+  title: {
+    margin: 0,
+    fontSize: "38px",
+    color: "#0f172a",
+  },
+
+  subtitle: {
+    marginTop: "8px",
+    color: "#64748b",
+    fontSize: "16px",
+  },
+
+  addButton: {
+    padding: "14px 22px",
+    borderRadius: "12px",
+    border: "none",
+    background: "linear-gradient(135deg, #2563eb, #38bdf8)",
+    color: "#ffffff",
+    fontWeight: "700",
+    cursor: "pointer",
+  },
+
+  toolbar: {
+    background: "#ffffff",
+    padding: "20px",
+    borderRadius: "18px",
+    marginBottom: "24px",
+    boxShadow: "0 10px 25px rgba(15, 23, 42, 0.08)",
+  },
+
+  toolbarRow: {
+    display: "flex",
+    gap: "16px",
+    alignItems: "center",
+  },
+
+  search: {
+    flex: 1,
+    padding: "14px 16px",
+    borderRadius: "12px",
+    border: "1px solid #cbd5e1",
+  },
+
+  select: {
+    padding: "12px",
+    borderRadius: "12px",
+    border: "1px solid #cbd5e1",
+  },
+
+  resetButton: {
+    padding: "12px 16px",
+    borderRadius: "12px",
+    border: "none",
+    background: "#e2e8f0",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  tableCard: {
+    background: "#ffffff",
+    borderRadius: "22px",
+    padding: "24px",
+    boxShadow: "0 15px 35px rgba(15, 23, 42, 0.08)",
+    overflowX: "auto",
+  },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+  },
+
+  th: {
+    textAlign: "center",
+    padding: "16px",
+    color: "#475569",
+    borderBottom: "1px solid #e2e8f0",
+  },
+
+  td: {
+    padding: "16px",
+    borderBottom: "1px solid #e2e8f0",
+    textAlign: "center",
+  },
+
+  status: {
+  padding: "6px 12px",
+  borderRadius: "999px",
+  fontWeight: "700",
+  fontSize: "13px",
+  display: "inline-block",
+},
+
+  editButton: {
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "none",
+    background: "#dbeafe",
+    color: "#1d4ed8",
+    marginRight: "8px",
+    cursor: "pointer",
+  },
+
+  deleteButton: {
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "none",
+    background: "#fee2e2",
+    color: "#b91c1c",
+    cursor: "pointer",
+  },
+};
 
 export default CourseCatalog;
