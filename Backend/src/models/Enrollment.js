@@ -21,11 +21,14 @@ const enrollmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["enrolled", "dropped", "completed"],
-    default: "enrolled"
+    enum: ["pending", "approved", "rejected", "dropped", "completed"],
+    default: "pending"
   }
 });
 
-enrollmentSchema.index({ studentId: 1, courseId: 1, semester: 1, academicYear: 1 }, { unique: true });
+enrollmentSchema.index(
+  { studentId: 1, courseId: 1, semester: 1, academicYear: 1 },
+  { unique: true, partialFilterExpression: { status: { $ne: "rejected" } } }
+);
 
 export default mongoose.model("Enrollment", enrollmentSchema);
