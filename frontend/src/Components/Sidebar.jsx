@@ -1,8 +1,33 @@
 import { NavLink } from "react-router-dom";
 import { useLogout } from "../hooks/useLogout";
+import { useState, useEffect } from "react";
+import api from "../Api/axios";
 
 export default function Sidebar({ isOpen }) {
+    const [currentUser, setCurrentUser] = useState(null);
     const { logout } = useLogout();
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const { data } = await api.get("/auth/me", {
+                    withCredentials: true,
+                });
+
+                setCurrentUser(data.user);
+            } catch (err) {
+                setCurrentUser(null);
+            }
+        };
+
+        fetchCurrentUser();
+    }, []);
+
+    const role = currentUser?.role;
+
+    const isAdmin = role === "admin";
+    const isStudent = role === "student";
+    const isProfessorOrTa = role === "professor" || role === "ta";
 
     return (
         <aside
@@ -22,10 +47,6 @@ export default function Sidebar({ isOpen }) {
                         Dashboard
                     </NavLink>
 
-                    <NavLink to="/students" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        Student Records
-                    </NavLink>
-
                     <NavLink to="/courses" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                         Courses
                     </NavLink>
@@ -34,12 +55,22 @@ export default function Sidebar({ isOpen }) {
                         Rooms
                     </NavLink>
 
-                    <NavLink to="/enrollments" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        Enrollments
-                    </NavLink>
+                    {
+                        isAdmin && (
+                            <NavLink to="/enrollments" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                                View Enrollment Requests
+                            </NavLink>)
+                    }
+
+                    {(isAdmin) && (
+                        <NavLink to="/students" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            View Student Records
+                        </NavLink>)
+                    }
+
 
                     <NavLink to="/transcripts" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        Transcripts
+                        {isAdmin ? "View Transcripts" : "Request Transcripts"}
                     </NavLink>
                 </nav>
 
