@@ -1,78 +1,148 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../Api/axios";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 function Transcripts() {
   const [search, setSearch] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [transcripts, setTranscripts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const transcripts = [
-    {
-      id: "TR-001",
-      studentId: "2023001",
-      name: "Ahmed Youssef",
-      program: "Computer Engineering",
-      gpa: "3.72",
-      credits: 96,
-      status: "Ready",
-      updated: "Apr 2026",
-    },
-    {
-      id: "TR-002",
-      studentId: "2023002",
-      name: "Sara Mohamed",
-      program: "Information Systems",
-      gpa: "3.89",
-      credits: 84,
-      status: "Ready",
-      updated: "Apr 2026",
-    },
-    {
-      id: "TR-003",
-      studentId: "2023003",
-      name: "Omar Ali",
-      program: "Cybersecurity",
-      gpa: "2.94",
-      credits: 112,
-      status: "Pending",
-      updated: "Mar 2026",
-    },
-  ];
+  const navigate = useNavigate();
 
-  const filteredTranscripts = transcripts.filter(
-    (item) =>
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.studentId.includes(search) ||
-      item.program.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleExportPDF = (item) => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Student Transcript", 14, 15);
+
+    doc.setFontSize(11);
+    doc.text(`Student Name: ${item.studentName}`, 14, 30);
+    doc.text(`Student ID: ${item.studentId}`, 14, 38);
+    doc.text(`Program: ${item.program}`, 14, 46);
+    doc.text(`GPA: ${item.gpa}`, 14, 54);
+    doc.text(`Total Credits: ${item.credits}`, 14, 62);
+
+    const tableRows = item.grades.map((grade) => [
+      grade.courseId?.courseCode || "N/A",
+      grade.courseId?.title || "N/A",
+      grade.creditHours || "N/A",
+      grade.grade || "N/A",
+      item.semester || "N/A",
+      item.academicYear || "N/A",
+    ]);
+
+    autoTable(doc, {
+      startY: 75,
+      head: [[
+        "Course Code",
+        "Course Title",
+        "Credit Hours",
+        "Grade",
+        "Semester",
+        "Academic Year",
+      ]],
+      body: tableRows,
+    });
+
+    doc.save(`${item.studentName}-transcript.pdf`);
+  };
+
+  useEffect(() => {
+    const fetchPageData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const userRes = await api.get("/auth/me", {
+          withCredentials: true,
+        });
+
+        setCurrentUser(userRes.data.user);
+
+        const transcriptsRes = await api.get("/student-records/transcripts", {
+          withCredentials: true,
+        });
+
+        const mappedTranscripts = (transcriptsRes.data.transcripts || []).map((record) => ({
+          id: record._id,
+          studentId: record.studentId?._id || "N/A",
+          studentName: record.studentId?.userId?.fullName || "N/A",
+          program: record.studentId?.program || "N/A",
+          academicYear: record.academicYear || "N/A",
+          semester: record.semester || "N/A",
+          courses: record.grades?.length || 0,
+          credits:
+            record.grades?.reduce((sum, grade) => sum + (grade.creditHours || 0), 0) || 0,
+          gpa: record.gpa ?? "N/A",
+          status: record.status || "N/A",
+
+          grades: record.grades || [],
+        }));
+
+        setTranscripts(mappedTranscripts);
+      } catch (err) {
+        console.error("Failed to fetch transcripts:", err.response?.data || err.message);
+        setError("Failed to fetch transcripts.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPageData();
+  }, []);
+
+  const role = currentUser?.role;
+  const isAdmin = role === "admin";
+  const isStudent = role === "student";
+
+  const filteredTranscripts = transcripts.filter((item) => {
+    const searchValue = search.toLowerCase();
+
+    return (
+      item.studentName?.toLowerCase().includes(searchValue) ||
+      item.studentId?.toString().includes(search) ||
+      item.program?.toLowerCase().includes(searchValue) ||
+      item.semester?.toLowerCase().includes(searchValue) ||
+      item.academicYear?.includes(search)
+    );
+  });
+
+  const completedCount = transcripts.filter(
+    (r) => r.status === "Completed"
+  ).length;
+
+  const inProgressCount = transcripts.filter(
+    (r) => r.status === "In Progress"
+  ).length;
 
   return (
     <div style={styles.page}>
-
       <main style={styles.main}>
         <section style={styles.header}>
           <div>
             <h1 style={styles.title}>Transcripts</h1>
-            <p style={styles.subtitle}>
-              View, manage, and generate student academic transcripts
-            </p>
+            <p style={styles.subtitle}>View student academic records</p>
           </div>
-
-          <button style={styles.primaryButton}>+ Generate Transcript</button>
         </section>
 
         <section style={styles.cards}>
           <div style={styles.card}>
             <p style={styles.cardLabel}>Total Transcripts</p>
-            <h2 style={styles.cardNumber}>312</h2>
+            <h2 style={styles.cardNumber}>{transcripts.length}</h2>
           </div>
 
           <div style={styles.card}>
-            <p style={styles.cardLabel}>Ready</p>
-            <h2 style={styles.cardNumber}>284</h2>
+            <p style={styles.cardLabel}>Completed</p>
+            <h2 style={styles.cardNumber}>{completedCount}</h2>
           </div>
 
           <div style={styles.card}>
-            <p style={styles.cardLabel}>Pending</p>
-            <h2 style={styles.cardNumber}>28</h2>
+            <p style={styles.cardLabel}>In Progress</p>
+            <h2 style={styles.cardNumber}>{inProgressCount}</h2>
           </div>
         </section>
 
@@ -80,59 +150,50 @@ function Transcripts() {
           <input
             style={styles.search}
             type="text"
-            placeholder="Search by student name, ID, or program..."
+            placeholder="Search by student, ID, program, semester, or academic year..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </section>
 
-        <section style={styles.tableCard}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Transcript ID</th>
-                <th style={styles.th}>Student ID</th>
-                <th style={styles.th}>Student Name</th>
-                <th style={styles.th}>Program</th>
-                <th style={styles.th}>GPA</th>
-                <th style={styles.th}>Credits</th>
-                <th style={styles.th}>Status</th>
-                <th style={styles.th}>Last Updated</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
+        {loading && <p>Loading transcripts...</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-            <tbody>
-              {filteredTranscripts.map((item) => (
-                <tr key={item.id}>
-                  <td style={styles.td}>{item.id}</td>
-                  <td style={styles.td}>{item.studentId}</td>
-                  <td style={styles.td}>{item.name}</td>
-                  <td style={styles.td}>{item.program}</td>
-                  <td style={styles.td}>{item.gpa}</td>
-                  <td style={styles.td}>{item.credits}</td>
-                  <td style={styles.td}>
-                    <span
-                      style={{
-                        ...styles.status,
-                        background:
-                          item.status === "Ready" ? "#dcfce7" : "#fef3c7",
-                        color: item.status === "Ready" ? "#15803d" : "#b45309",
-                      }}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{item.updated}</td>
-                  <td style={styles.td}>
-                    <button style={styles.viewButton}>View</button>
-                    <button style={styles.downloadButton}>Download</button>
-                  </td>
+        {!loading && !error && (
+          <section style={styles.tableCard}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Student ID</th>
+                  <th style={styles.th}>Student Name</th>
+                  <th style={styles.th}>Program</th>
+                  <th style={styles.th}>Courses Completed</th>
+                  <th style={styles.th}>Credits</th>
+                  <th style={styles.th}>GPA</th>
+                  <th style={styles.th}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+              </thead>
+
+              <tbody>
+                {filteredTranscripts.map((item) => (
+                  <tr key={item.id || item._id}>
+                    <td style={styles.td}>{item.studentId}</td>
+                    <td style={styles.td}>{item.studentName}</td>
+                    <td style={styles.td}>{item.program}</td>
+                    <td style={styles.td}>{item.courses}</td>
+                    <td style={styles.td}>{item.credits}</td>
+                    <td style={styles.td}>{item.gpa}</td>
+                    <td style={styles.td}>
+                      <button style={styles.downloadButton} onClick={() => handleExportPDF(item)}>
+                        Export
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
       </main>
     </div>
   );
@@ -144,50 +205,6 @@ const styles = {
     display: "flex",
     background: "#f8fafc",
     fontFamily: "Arial, sans-serif",
-  },
-  sidebar: {
-    width: "260px",
-    background: "linear-gradient(180deg, #0f172a, #1e293b)",
-    color: "#ffffff",
-    padding: "30px 24px",
-    display: "flex",
-    flexDirection: "column",
-  },
-  logo: {
-    fontSize: "34px",
-    margin: "0 0 45px",
-    color: "#38bdf8",
-    letterSpacing: "2px",
-  },
-  nav: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-    flex: 1,
-  },
-  activeLink: {
-    padding: "14px 16px",
-    borderRadius: "12px",
-    background: "linear-gradient(135deg, #2563eb, #38bdf8)",
-    color: "#ffffff",
-    fontWeight: "700",
-    cursor: "pointer",
-  },
-  link: {
-    padding: "14px 16px",
-    borderRadius: "12px",
-    color: "#cbd5e1",
-    cursor: "pointer",
-    textDecoration: "none",
-  },
-  logout: {
-    padding: "14px",
-    borderRadius: "12px",
-    border: "none",
-    background: "#ef4444",
-    color: "#ffffff",
-    fontWeight: "700",
-    cursor: "pointer",
   },
   main: {
     flex: 1,
@@ -268,26 +285,24 @@ const styles = {
     width: "100%",
     borderCollapse: "collapse",
   },
-    th: {
+  th: {
     textAlign: "center",
     padding: "16px",
     color: "#475569",
     borderBottom: "1px solid #e2e8f0",
   },
-
   td: {
     padding: "16px",
     borderBottom: "1px solid #e2e8f0",
     textAlign: "center",
   },
-
   status: {
-  padding: "6px 12px",
-  borderRadius: "999px",
-  fontWeight: "700",
-  fontSize: "13px",
-  display: "inline-block",
-},
+    padding: "6px 12px",
+    borderRadius: "999px",
+    fontWeight: "700",
+    fontSize: "13px",
+    display: "inline-block",
+  },
   viewButton: {
     padding: "4px 12px",
     borderRadius: "8px",
