@@ -1,37 +1,127 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../Api/axios";
 
 function CourseCatalog() {
-  const [courses] = useState([
-    {
-      id: 1,
-      code: "CS101",
-      name: "Intro to Computer Science",
-      type: "Core",
-      professor: "Dr. Smith",
-      schedule: "Mon/Wed • 10:00–12:00",
-    },
-    {
-      id: 2,
-      code: "CS202",
-      name: "Data Structures",
-      type: "Core",
-      professor: "Dr. Ali",
-      schedule: "Tue/Thu • 12:00–2:00",
-    },
-    {
-      id: 3,
-      code: "CS305",
-      name: "AI Fundamentals",
-      type: "Elective",
-      professor: "Dr. John",
-      schedule: "Sun/Tue • 3:00–5:00",
-    },
-  ]);
-
+  const [currentUser, setCurrentUser] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [requestedCourseIds, setRequestedCourseIds] = useState([]);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const navigate = useNavigate();
+
+  const handleDelete = async (courseId) => {
+    if (!window.confirm("Delete this course?")) return;
+
+    try {
+      await api.delete(`/courses/${courseId}`, {
+        withCredentials: true,
+      });
+
+      setCourses((prev) =>
+        prev.filter((c) => c.id !== courseId)
+      );
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Failed to delete");
+    }
+  };
+
+  const handleEnroll = async (courseId) => {
+    try {
+      const res = await api.post(
+        `/enrollments/request/${courseId}`,
+        {},
+        { withCredentials: true }
+      );
+
+      setRequestedCourseIds((prev) => [...prev, courseId]);
+
+      alert(res.data.message || "Enrollment request submitted");
+    } catch (err) {
+      console.error("Enroll failed:", err.response?.data || err.message);
+
+      alert(err.response?.data?.message || "Failed to request enrollment");
+    }
+  };
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const { data } = await api.get("/auth/me", {
+          withCredentials: true,
+        });
+
+        setCurrentUser(data.user);
+      } catch (err) {
+        setCurrentUser(null);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    const coursesFetched = async () => {
+      try {
+        setLoading(true);
+
+        const { data } = await api.get("/courses", {
+          withCredentials: true,
+        });
+
+        const mappedCourses = data.map((c) => ({
+          id: c._id,
+          code: c.courseCode,
+          name: c.title,
+          type: c.type === "core" ? "Core" : "Elective",
+          professor: c.professorId?.userId?.fullName || "N/A",
+          prerequisites:
+            c.prerequisites?.length > 0
+              ? c.prerequisites.map((p) => p.courseCode).join(", ")
+              : "None",
+        }));
+
+        setCourses(mappedCourses);
+      } catch (err) {
+        setError("Failed to load courses");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    coursesFetched();
+  }, []);
+
+  const role = currentUser?.role;
+
+  const isAdmin = role === "admin";
+  const isStudent = role === "student";
+  const isProfessorOrTa = role === "professor" || role === "ta";
+
+  useEffect(() => {
+    const fetchMyRequests = async () => {
+      if (!isStudent) return;
+
+      try {
+        const { data } = await api.get("/enrollments/requests/my-requests", {
+          withCredentials: true,
+        });
+
+        const ids = data.map((request) => request.courseId);
+
+        setRequestedCourseIds(ids);
+      } catch (err) {
+        console.error("Failed to fetch enrollment requests:", err.response?.data || err.message);
+      }
+    };
+
+    fetchMyRequests();
+  }, [isStudent]);
+
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch = course.name
@@ -47,7 +137,7 @@ function CourseCatalog() {
   return (
     <div style={styles.page}>
       <main style={styles.main}>
-        
+
         <header style={styles.header}>
           <div>
             <h1 style={styles.title}>Course Catalog</h1>
@@ -56,14 +146,18 @@ function CourseCatalog() {
             </p>
           </div>
 
-          <button style={styles.addButton} onClick = {() => navigate("/create-courses")}>
-            + Add Course
-          </button>
+          {isAdmin && (
+            <button
+              style={styles.addButton}
+              onClick={() => navigate("/create-courses")}
+            >
+              + Add Course
+            </button>
+          )}
         </header>
 
         <section style={styles.toolbar}>
           <div style={styles.toolbarRow}>
-            
             <input
               style={styles.search}
               type="text"
@@ -91,56 +185,99 @@ function CourseCatalog() {
             >
               Reset
             </button>
-
           </div>
         </section>
 
-        <section style={styles.tableCard}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Code</th>
-                <th style={styles.th}>Course Name</th>
-                <th style={styles.th}>Type</th>
-                <th style={styles.th}>Professor</th>
-                <th style={styles.th}>Schedule</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
+        {loading && <p>Loading courses...</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-            <tbody>
-              {filteredCourses.map((course) => (
-                <tr key={course.id}>
-                  <td style={styles.td}>{course.code}</td>
-                  <td style={styles.td}>{course.name}</td>
-
-                  <td style={styles.td}>
-                    <span
-                      style={{
-                        ...styles.status,
-                        background:
-                          course.type === "Core" ? "#dbeafe" : "#fef3c7",
-                        color:
-                          course.type === "Core" ? "#1d4ed8" : "#92400e",
-                      }}
-                    >
-                      {course.type}
-                    </span>
-                  </td>
-
-                  <td style={styles.td}>{course.professor}</td>
-                  <td style={styles.td}>{course.schedule}</td>
-
-                  <td style={styles.td}>
-                    <button style={styles.editButton}>Edit</button>
-                    <button style={styles.deleteButton}>Delete</button>
-                  </td>
+        {!loading && !error && (
+          <section style={styles.tableCard}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Code</th>
+                  <th style={styles.th}>Course Name</th>
+                  <th style={styles.th}>Type</th>
+                  <th style={styles.th}>Professor</th>
+                  <th style={styles.th}>Prerequisites</th>
+                  {!isProfessorOrTa && <th style={styles.th}>Actions</th>}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+              </thead>
 
+              <tbody>
+                {filteredCourses.map((course) => {
+                  const isRequested = requestedCourseIds.includes(course.id);
+
+                  return (
+                    <tr key={course.id}>
+                      <td style={styles.td}>{course.code}</td>
+                      <td style={styles.td}>{course.name}</td>
+
+                      <td style={styles.td}>
+                        <span
+                          style={{
+                            ...styles.status,
+                            background:
+                              course.type === "Core"
+                                ? "#dbeafe"
+                                : "#fef3c7",
+                          }}
+                        >
+                          {course.type}
+                        </span>
+                      </td>
+
+                      <td style={styles.td}>{course.professor}</td>
+                      <td style={styles.td}>{course.prerequisites}</td>
+
+                      {!isProfessorOrTa && (
+                        <td style={styles.td}>
+
+                          {isAdmin && (
+                            <>
+                              <button
+                                style={styles.editButton}
+                                onClick={() =>
+                                  navigate(`/edit-course/${course.id}`)
+                                }
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                style={styles.deleteButton}
+                                onClick={() => handleDelete(course.id)}
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+
+                          {isStudent && (
+                            <button
+                              style={{
+                                ...styles.enrollButton,
+                                ...(isRequested
+                                  ? styles.disabledEnrollButton
+                                  : {}),
+                              }}
+                              disabled={isRequested}
+                              onClick={() => handleEnroll(course.id)}
+                            >
+                              {isRequested ? "Requested" : "Enroll"}
+                            </button>
+                          )}
+
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
+        )}
       </main>
     </div>
   );
@@ -251,12 +388,12 @@ const styles = {
   },
 
   status: {
-  padding: "6px 12px",
-  borderRadius: "999px",
-  fontWeight: "700",
-  fontSize: "13px",
-  display: "inline-block",
-},
+    padding: "6px 12px",
+    borderRadius: "999px",
+    fontWeight: "700",
+    fontSize: "13px",
+    display: "inline-block",
+  },
 
   editButton: {
     padding: "8px 12px",
@@ -276,6 +413,22 @@ const styles = {
     color: "#b91c1c",
     cursor: "pointer",
   },
+
+  enrollButton: {
+    padding: "8px 30px",
+    borderRadius: "8px",
+    border: "none",
+    background: "#dbeafe",
+    color: "#1d4ed8",
+    marginRight: "8px",
+    cursor: "pointer",
+  },
+
+  disabledEnrollButton: {
+    background: "#e2e8f0",
+    color: "#64748b",
+    cursor: "not-allowed",
+  }
 };
 
 export default CourseCatalog;
