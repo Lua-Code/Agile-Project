@@ -61,10 +61,6 @@ function Login() {
         <button style={styles.button} type="submit" disabled={isLoading}>
           {isLoading ? "Logging in..." : "Login"}
         </button>
-
-        <p style={styles.footerText}>
-          Forgot password? <span style={styles.link}>Reset here</span>
-        </p>
       </form>
     </div>
   );
