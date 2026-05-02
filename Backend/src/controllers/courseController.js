@@ -1,5 +1,16 @@
 import * as courseService from "../services/courseService.js";
 
+export const checkCourseCode = async (req, res, next) => {
+    try {
+        const { code } = req.query;
+        if (!code) return res.status(400).json({ message: "code query param required" });
+        const unique = await courseService.isCourseCodeUnique(code.toUpperCase());
+        res.json({ unique });
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const getCourses = async (req, res, next) => {
     try {
         const courses = await courseService.getAllCourses();

@@ -2,6 +2,12 @@ import Course from "../models/Course.js";
 import Professor from "../models/Professor.js";
 import User from "../models/User.js";
 
+// CHECK COURSE CODE UNIQUENESS
+export const isCourseCodeUnique = async (code) => {
+  const exists = await Course.findOne({ courseCode: code });
+  return !exists;
+};
+
 // GET ALL COURSES
 export const getAllCourses = async () => {
   return await Course.find()

@@ -7,10 +7,12 @@ import {
   createCourse,
   updateCourse,
   deleteCourse,
+  checkCourseCode,
 } from "../controllers/courseController.js";
 
 router.use(requireAuth);
 
+router.get("/check-code", checkCourseCode);
 router.get("/", getCourses);
 router.post("/", createCourse);
 router.put("/:id", updateCourse);

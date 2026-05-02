@@ -1,38 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../Api/axios";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 function StudentRecords() {
-  const [students, setStudents] = useState([
-    {
-      id: 1,
-      name: "Ahmed Youssef",
-      email: "ahmed@fis.com",
-      course: "Computer engineering",
-      year: "Year 3",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Sara Mohamed",
-      email: "sara@fis.com",
-      course: "Information Systems",
-      year: "Year 2",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Omar Ali",
-      email: "omar@fis.com",
-      course: "Cybersecurity",
-      year: "Year 4",
-      status: "Inactive",
-    },
-  ]);
+  const { user } = useAuthContext();
+  const navigate = useNavigate();
 
+  const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const filteredStudents = students.filter((student) =>
-    student.name.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    api
+      .get("/students")
+      .then((res) => setStudents(res.data))
+      .catch(() => setError("Failed to load students."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filteredStudents = students.filter(
+    (s) =>
+      s.name?.toLowerCase().includes(search.toLowerCase()) ||
+      s.email?.toLowerCase().includes(search.toLowerCase()) ||
+      String(s.studentId).includes(search)
   );
+
+  const handleAddStudent = () => {
+    if (!user || user.role !== "admin") return;
+    navigate("/create-student");
+  };
 
   return (
     <div style={styles.page}>
@@ -44,7 +42,11 @@ function StudentRecords() {
             <p style={styles.subtitle}>Manage and view all student information</p>
           </div>
 
-          <button style={styles.addButton}>+ Add Student</button>
+          {user?.role === "admin" && (
+            <button style={styles.addButton} onClick={handleAddStudent}>
+              + Add Student
+            </button>
+          )}
         </header>
 
         <section style={styles.toolbar}>
@@ -58,48 +60,67 @@ function StudentRecords() {
         </section>
 
         <section style={styles.tableCard}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>ID</th>
-                <th style={styles.th}>Student Name</th>
-                <th style={styles.th}>Email</th>
-                <th style={styles.th}>Course</th>
-                <th style={styles.th}>Year</th>
-                <th style={styles.th}>Status</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredStudents.map((student) => (
-                <tr key={student.id}>
-                  <td style={styles.td}>{student.id}</td>
-                  <td style={styles.td}>{student.name}</td>
-                  <td style={styles.td}>{student.email}</td>
-                  <td style={styles.td}>{student.course}</td>
-                  <td style={styles.td}>{student.year}</td>
-                  <td style={styles.td}>
-                    <span
-                      style={{
-                        ...styles.status,
-                        background:
-                          student.status === "Active" ? "#dcfce7" : "#fee2e2",
-                        color:
-                          student.status === "Active" ? "#166534" : "#991b1b",
-                      }}
-                    >
-                      {student.status}
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <button style={styles.editButton}>Edit</button>
-                    <button style={styles.deleteButton}>Delete</button>
-                  </td>
+          {loading ? (
+            <p style={{ textAlign: "center", color: "#64748b" }}>Loading...</p>
+          ) : error ? (
+            <p style={{ textAlign: "center", color: "#ef4444" }}>{error}</p>
+          ) : (
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Student ID</th>
+                  <th style={styles.th}>Student Name</th>
+                  <th style={styles.th}>Email</th>
+                  <th style={styles.th}>Department</th>
+                  <th style={styles.th}>Program</th>
+                  <th style={styles.th}>Year Level</th>
+                  <th style={styles.th}>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {filteredStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ ...styles.td, color: "#94a3b8" }}>
+                      No students found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredStudents.map((student) => (
+                    <tr key={student._id}>
+                      <td style={styles.td}>{student.studentId}</td>
+                      <td style={styles.td}>{student.name}</td>
+                      <td style={styles.td}>{student.email}</td>
+                      <td style={styles.td}>{student.department}</td>
+                      <td style={styles.td}>{student.program}</td>
+                      <td style={styles.td}>Year {student.yearLevel}</td>
+                      <td style={styles.td}>
+                        <span
+                          style={{
+                            ...styles.status,
+                            background:
+                              student.status === "active"
+                                ? "#dcfce7"
+                                : student.status === "graduated"
+                                ? "#dbeafe"
+                                : "#fee2e2",
+                            color:
+                              student.status === "active"
+                                ? "#166534"
+                                : student.status === "graduated"
+                                ? "#1d4ed8"
+                                : "#991b1b",
+                          }}
+                        >
+                          {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </section>
       </main>
     </div>

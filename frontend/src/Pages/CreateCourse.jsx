@@ -22,6 +22,22 @@ export default function CreateCourse() {
   const [showProfDropdown, setShowProfDropdown] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [courseCodeError, setCourseCodeError] = useState(null);
+
+  useEffect(() => {
+    const code = formData.courseCode.trim();
+    if (!code) { setCourseCodeError(null); return; }
+    setCourseCodeError(null);
+    const timer = setTimeout(() => {
+      api
+        .get(`/courses/check-code?code=${encodeURIComponent(code)}`)
+        .then((res) => {
+          if (!res.data.unique) setCourseCodeError("Course code already exists.");
+        })
+        .catch(() => {});
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [formData.courseCode]);
 
   useEffect(() => {
     if (professorSearch.length < 2) return;
@@ -67,6 +83,7 @@ export default function CreateCourse() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (courseCodeError) return;
     const credits = Number(formData.creditHours);
     if (credits < 0 || credits > 5) {
       setError("Credit hours must be between 0 and 5.");
@@ -99,6 +116,9 @@ export default function CreateCourse() {
             <h1 style={styles.title}>Create New Course</h1>
             <p style={styles.subtitle}>Fill in the course details below</p>
           </div>
+          <button style={styles.backButton} onClick={() => navigate("/courses")}>
+            ← Back to Course Catalog
+          </button>
         </header>
 
         <section style={styles.formCard}>
@@ -114,9 +134,14 @@ export default function CreateCourse() {
                   value={formData.courseCode}
                   onChange={handleChange}
                   required
-                  style={styles.input}
+                  style={{ ...styles.input, ...(courseCodeError ? { borderColor: "#ef4444" } : {}) }}
                   placeholder="e.g., CS101"
                 />
+                {courseCodeError && (
+                  <p style={{ color: "#ef4444", fontSize: "13px", marginTop: "4px" }}>
+                    {courseCodeError}
+                  </p>
+                )}
               </div>
 
               <div style={styles.formGroup}>
@@ -293,7 +318,21 @@ const styles = {
   },
 
   header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: "28px",
+  },
+
+  backButton: {
+    padding: "10px 18px",
+    borderRadius: "12px",
+    border: "1px solid #cbd5e1",
+    background: "#ffffff",
+    color: "#475569",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontSize: "14px",
   },
 
   title: {
