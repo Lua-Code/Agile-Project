@@ -28,7 +28,7 @@ export const createCourse = async (data) => {
     prerequisites,
   } = data;
 
-  if (!courseCode || !title || !type || !creditHours || !department) {
+  if (!courseCode || !title || !type || creditHours === undefined || creditHours === null || creditHours === "" || !department) {
     const err = new Error("Missing required fields");
     err.statusCode = 400;
     throw err;

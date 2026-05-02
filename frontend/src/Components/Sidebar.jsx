@@ -85,7 +85,7 @@ const styles = {
         color: "#ffffff",
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
+        height: "100%",
     },
 
     logo: {
