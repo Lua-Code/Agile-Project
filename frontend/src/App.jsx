@@ -11,6 +11,7 @@ import Enrollment from "./Pages/Enrollment";
 import Transcripts from "./Pages/Transcripts";
 import CreateCourse from "./Pages/CreateCourse";
 import CreateStudent from "./Pages/CreateStudent";
+import Materials from "./Pages/Materials";
 
 // LAYOUT + AUTH
 import MainLayout from "./Layouts/MainLayout";
@@ -114,6 +115,16 @@ function App() {
               </PrivateRoute>
             }
           />
+
+          <Route
+            path="/materials"
+            element={
+              <PrivateRoute>
+                <Materials />
+              </PrivateRoute>
+            }
+          />  
+          
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

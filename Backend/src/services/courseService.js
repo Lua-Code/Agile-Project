@@ -2,13 +2,11 @@ import Course from "../models/Course.js";
 import Professor from "../models/Professor.js";
 import User from "../models/User.js";
 
-// CHECK COURSE CODE UNIQUENESS
 export const isCourseCodeUnique = async (code) => {
   const exists = await Course.findOne({ courseCode: code });
   return !exists;
 };
 
-// GET ALL COURSES
 export const getAllCourses = async () => {
   return await Course.find()
     .populate({
@@ -21,7 +19,6 @@ export const getAllCourses = async () => {
     .populate("prerequisites", "courseCode title");
 };
 
-// CREATE COURSE
 export const createCourse = async (data) => {
   const {
     courseCode,
@@ -60,7 +57,6 @@ export const createCourse = async (data) => {
   });
 };
 
-// UPDATE COURSE
 export const updateCourse = async (id, data) => {
   const course = await Course.findByIdAndUpdate(id, data, {
     new: true,
@@ -75,7 +71,6 @@ export const updateCourse = async (id, data) => {
   return course;
 };
 
-// DELETE COURSE
 export const deleteCourse = async (id) => {
   const course = await Course.findByIdAndDelete(id);
 
@@ -86,4 +81,24 @@ export const deleteCourse = async (id) => {
   }
 
   return course;
+};
+
+export const getMyCoursesService = async (user) => {
+  if (!user) {
+    const error = new Error("Not authenticated");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const professor = await Professor.findOne({ userId: user.id });
+
+  if (!professor) {
+    const error = new Error("Professor profile not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return await Course.find({ professorId: professor._id }).sort({
+    courseCode: 1,
+  });
 };

@@ -8,6 +8,7 @@ import {
   updateCourse,
   deleteCourse,
   checkCourseCode,
+  getMyCourses
 } from "../controllers/courseController.js";
 
 router.use(requireAuth);
@@ -17,5 +18,6 @@ router.get("/", getCourses);
 router.post("/", createCourse);
 router.put("/:id", updateCourse);
 router.delete("/:id", deleteCourse);
+router.get("/my-courses", getMyCourses);
 
 export default router;

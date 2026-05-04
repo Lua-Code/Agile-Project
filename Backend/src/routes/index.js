@@ -11,6 +11,7 @@ import roomRoutes from "./roomRoutes.js";
 import studentRoutes from "./studentRoutes.js";
 import studentRecordsRoutes from "./studentRecordRoutes.js";
 import UserRoutes from "./userRoutes.js";
+import materialRoutes from "./materialRoutes.js";
 
 router.use("/admin", adminRoutes);
 router.use("/auth", authRoutes);
@@ -22,5 +23,6 @@ router.use("/rooms", roomRoutes);
 router.use("/students", studentRoutes);
 router.use("/student-records", studentRecordsRoutes);
 router.use("/users", UserRoutes);
+router.use("/materials", materialRoutes);
 
 export default router;
