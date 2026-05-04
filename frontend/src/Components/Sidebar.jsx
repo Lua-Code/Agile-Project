@@ -76,7 +76,7 @@ export default function Sidebar({ isOpen }) {
 
                     {(!isAdmin) && (
                         <NavLink to="/materials" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                            Course Materials
+                            {isProfessorOrTa ? "Upload Course Materials" : "View Course Materials"}
                         </NavLink>
                     )}
 
