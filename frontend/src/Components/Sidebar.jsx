@@ -28,6 +28,7 @@ export default function Sidebar({ isOpen }) {
     const isAdmin = role === "admin";
     const isStudent = role === "student";
     const isProfessorOrTa = role === "professor" || role === "ta";
+    const isEmployee = role === "employee";
 
     return (
         <aside
@@ -77,6 +78,12 @@ export default function Sidebar({ isOpen }) {
                     {(!isAdmin) && (
                         <NavLink to="/materials" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             {isProfessorOrTa ? "Upload Course Materials" : "View Course Materials"}
+                        </NavLink>
+                    )}
+
+                    {isProfessorOrTa && (
+                        <NavLink to="/employee-portal" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Employee Portal
                         </NavLink>
                     )}
 
