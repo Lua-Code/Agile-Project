@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 
 import adminRoutes from "./adminRoutes.js";
+import announcementRoutes from "./announcementRoutes.js";
 import authRoutes from "./authRoutes.js";
 import bookingRoutes from "./bookingRoutes.js";
 import courseRoutes from "./courseRoutes.js";
@@ -13,6 +14,7 @@ import studentRecordsRoutes from "./studentRecordRoutes.js";
 import UserRoutes from "./userRoutes.js";
 
 router.use("/admin", adminRoutes);
+router.use("/announcements", announcementRoutes);
 router.use("/auth", authRoutes);
 router.use("/bookings", bookingRoutes);
 router.use("/courses", courseRoutes);

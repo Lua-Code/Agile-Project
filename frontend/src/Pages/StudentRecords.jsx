@@ -75,13 +75,14 @@ function StudentRecords() {
                   <th style={styles.th}>Program</th>
                   <th style={styles.th}>Year Level</th>
                   <th style={styles.th}>Status</th>
+                  {user?.role === "admin" && <th style={styles.th}>Actions</th>}
                 </tr>
               </thead>
 
               <tbody>
                 {filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={7} style={{ ...styles.td, color: "#94a3b8" }}>
+                    <td colSpan={user?.role === "admin" ? 8 : 7} style={{ ...styles.td, color: "#94a3b8" }}>
                       No students found.
                     </td>
                   </tr>
@@ -115,6 +116,16 @@ function StudentRecords() {
                           {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
                         </span>
                       </td>
+                      {user?.role === "admin" && (
+                        <td style={styles.td}>
+                          <button
+                            style={styles.editButton}
+                            onClick={() => navigate(`/edit-student/${student._id}`)}
+                          >
+                            Edit
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}

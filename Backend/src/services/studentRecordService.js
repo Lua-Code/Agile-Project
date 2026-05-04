@@ -24,7 +24,7 @@ export const getTranscriptsService = async (user) => {
         path: "userId",
         select: "fullName email",
       },
-      select: "userId department program yearLevel status",
+      select: "studentId userId department program yearLevel status",
     })
     .populate("grades.courseId", "courseCode title creditHours")
     .sort({ createdAt: -1 });

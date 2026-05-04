@@ -69,7 +69,7 @@ function Transcripts() {
 
         const mappedTranscripts = (transcriptsRes.data.transcripts || []).map((record) => ({
           id: record._id,
-          studentId: record.studentId?._id || "N/A",
+          studentId: record.studentId?.studentId || "N/A",
           studentName: record.studentId?.userId?.fullName || "N/A",
           program: record.studentId?.program || "N/A",
           academicYear: record.academicYear || "N/A",
