@@ -14,6 +14,7 @@ import studentRoutes from "./studentRoutes.js";
 import studentRecordsRoutes from "./studentRecordRoutes.js";
 import UserRoutes from "./userRoutes.js";
 import materialRoutes from "./materialRoutes.js";
+import resourceRoutes from "./resourceRoutes.js";
 
 router.use("/admin", adminRoutes);
 router.use("/announcements", announcementRoutes);
@@ -28,5 +29,6 @@ router.use("/students", studentRoutes);
 router.use("/student-records", studentRecordsRoutes);
 router.use("/users", UserRoutes);
 router.use("/materials", materialRoutes);
+router.use("/resources", resourceRoutes);
 
 export default router;
