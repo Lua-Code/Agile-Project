@@ -71,7 +71,14 @@ export default function Sidebar({ isOpen }) {
                     {(!isProfessorOrTa) && (
                         <NavLink to="/transcripts" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             {isAdmin ? "View Transcripts" : "Request Transcripts"}
-                        </NavLink>)}
+                        </NavLink>)
+                    }
+
+                    {(!isAdmin) && (
+                        <NavLink to="/materials" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Course Materials
+                        </NavLink>
+                    )}
 
                 </nav>
 
