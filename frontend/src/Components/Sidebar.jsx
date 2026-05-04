@@ -80,6 +80,12 @@ export default function Sidebar({ isOpen }) {
                         </NavLink>
                     )}
 
+                    {(isAdmin) && (
+                        <NavLink to="/resources" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Manage Resources
+                        </NavLink>
+                    )}
+
                 </nav>
 
             </div>
