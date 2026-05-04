@@ -13,6 +13,7 @@ import CreateCourse from "./Pages/CreateCourse";
 import CreateStudent from "./Pages/CreateStudent";
 import Materials from "./Pages/Materials";
 import Resources from "./Pages/Resources";
+import EmployeePortal from "./Pages/EmployeePortal";
 
 // LAYOUT + AUTH
 import MainLayout from "./Layouts/MainLayout";
@@ -122,6 +123,15 @@ function App() {
             element={
               <PrivateRoute>
                 <Materials />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/employee-portal"
+            element={
+              <PrivateRoute>
+                <EmployeePortal />
               </PrivateRoute>
             }
           />  
