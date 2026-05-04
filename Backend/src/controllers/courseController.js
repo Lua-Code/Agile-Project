@@ -49,3 +49,17 @@ export const deleteCourse = async (req, res, next) => {
         next(err);
     }
 };
+
+export const getMyCourses = async (req, res) => {
+  try {
+    const courses = await courseService.getMyCoursesService(
+      req.session.user
+    );
+
+    res.status(200).json({ courses });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({
+      message: err.message || "Failed to fetch courses",
+    });
+  }
+};
