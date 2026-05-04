@@ -68,10 +68,11 @@ export default function Sidebar({ isOpen }) {
                         </NavLink>)
                     }
 
+                    {(!isProfessorOrTa) && (
+                        <NavLink to="/transcripts" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            {isAdmin ? "View Transcripts" : "Request Transcripts"}
+                        </NavLink>)}
 
-                    <NavLink to="/transcripts" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        {isAdmin ? "View Transcripts" : "Request Transcripts"}
-                    </NavLink>
                 </nav>
 
             </div>
