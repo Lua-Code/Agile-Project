@@ -1,59 +1,160 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuthContext } from '../hooks/useAuthContext';
 
 const Enrollments = () => {
-  // Mock logged-in student state
-  const [studentId] = useState("65a1b2c3d4e5f6a7b8c9d0e1"); 
+  const { user } = useAuthContext();
   
-  // State Management
+  // Student View State
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all"); // "all" or "selected"
   const [selectedCourseIds, setSelectedCourseIds] = useState(new Set());
   const [showPopup, setShowPopup] = useState(false);
 
-  // Mock fetching data on mount
-  useEffect(() => {
-    // We will replace this with your actual GET /api/courses route later
-    const mockCourses = [
-      { _id: "1", courseCode: "CEN301", title: "Advanced Embedded Systems", department: "Computer Engineering", creditHours: 3, type: "core" },
-      { _id: "2", courseCode: "CEN305", title: "Computer Networks", department: "Computer Engineering", creditHours: 4, type: "core" },
-      { _id: "3", courseCode: "CEN412", title: "Quantum Computing Basics", department: "Computer Engineering", creditHours: 3, type: "elective" },
-      { _id: "4", courseCode: "SWE201", title: "Full Stack Web Development", department: "Software Engineering", creditHours: 3, type: "core" },
-      { _id: "5", courseCode: "MAT202", title: "Linear Algebra", department: "Mathematics", creditHours: 3, type: "core" },
-    ];
-    setCourses(mockCourses);
-  }, []);
+  // Admin View State
+  const [enrollments, setEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Handlers
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (user?.role === "admin") {
+          const response = await axios.get('http://localhost:5000/api/enrollments', { withCredentials: true });
+          setEnrollments(response.data.data || []);
+        } else {
+          const response = await axios.get('http://localhost:5000/api/courses', { withCredentials: true });
+          setCourses(response.data.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [user]);
+
+  // Student Handlers
   const handleCheckboxChange = (courseId) => {
     setSelectedCourseIds((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(courseId)) {
-        newSet.delete(courseId);
-      } else {
-        newSet.add(courseId);
-      }
+      if (newSet.has(courseId)) newSet.delete(courseId);
+      else newSet.add(courseId);
       return newSet;
     });
   };
 
-  const handleEnrollSubmit = () => {
+  const handleEnrollSubmit = async () => {
     if (selectedCourseIds.size === 0) return;
     
-    // We will replace this with your actual POST /api/enrollments route later
-    console.log("Submitting enrollments for Student:", studentId, "Courses:", Array.from(selectedCourseIds));
-    
-    // Show success popup and clear selection
-    setShowPopup(true);
-    setSelectedCourseIds(new Set());
-    
-    // Hide popup after 3 seconds
-    setTimeout(() => {
-      setShowPopup(false);
-    }, 3000);
+    try {
+      await axios.post('http://localhost:5000/api/enrollments', {
+        studentId: user?._id || user?.id,
+        courseIds: Array.from(selectedCourseIds),
+        semester: "Fall", // Could be dynamic
+        academicYear: "2026-2027" // Could be dynamic
+      }, { withCredentials: true });
+      
+      setShowPopup(true);
+      setSelectedCourseIds(new Set());
+      setTimeout(() => setShowPopup(false), 3000);
+    } catch (error) {
+      console.error("Error creating enrollments:", error);
+      alert("Failed to enroll. " + (error.response?.data?.message || ""));
+    }
   };
 
-  // Filter and Search Logic
+  // Admin Handlers
+  const handleUpdateStatus = async (enrollmentId, newStatus) => {
+    try {
+      await axios.patch(`http://localhost:5000/api/enrollments/${enrollmentId}/status`, {
+        status: newStatus
+      }, { withCredentials: true });
+      
+      setEnrollments(prev => prev.map(enr => 
+        enr._id === enrollmentId ? { ...enr, status: newStatus } : enr
+      ));
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update status.");
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#E0E1DD] p-8 font-sans text-[#0D1B2A]">Loading...</div>;
+  }
+
+  // --- ADMIN VIEW ---
+  if (user?.role === "admin") {
+    return (
+      <div className="min-h-screen bg-[#E0E1DD] p-8 font-sans text-[#0D1B2A]">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#0D1B2A] mb-4">Manage Enrollments</h1>
+        </div>
+
+        <div className="table-container">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="table-header">
+                <th className="p-4 font-semibold">Student</th>
+                <th className="p-4 font-semibold">Course</th>
+                <th className="p-4 font-semibold">Term</th>
+                <th className="p-4 font-semibold">Status</th>
+                <th className="p-4 font-semibold text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {enrollments.length > 0 ? (
+                enrollments.map((enr) => (
+                  <tr key={enr._id} className="table-row">
+                    <td className="p-4">
+                      <div className="font-medium text-[#1B263B]">
+                        {enr.studentId?.firstName} {enr.studentId?.lastName}
+                      </div>
+                      <div className="text-xs text-[#778DA9]">{enr.studentId?.studentIdNumber || "N/A"}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-medium text-[#1B263B]">{enr.courseId?.courseCode}</div>
+                      <div className="text-xs text-[#778DA9]">{enr.courseId?.title}</div>
+                    </td>
+                    <td className="p-4 text-[#778DA9]">{enr.semester} {enr.academicYear}</td>
+                    <td className="p-4">
+                      <span className={`badge-status-${enr.status}`}>
+                        {enr.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex gap-2 justify-center">
+                        {enr.status === "pending" && (
+                          <>
+                            <button onClick={() => handleUpdateStatus(enr._id, "enrolled")} className="btn-success">Approve</button>
+                            <button onClick={() => handleUpdateStatus(enr._id, "dropped")} className="btn-danger">Reject</button>
+                          </>
+                        )}
+                        {enr.status === "enrolled" && (
+                          <button onClick={() => handleUpdateStatus(enr._id, "dropped")} className="btn-danger">Drop</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-[#778DA9]">
+                    No enrollments found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  // --- STUDENT VIEW ---
   const filteredCourses = courses.filter((course) => {
     const matchesSearch = 
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -66,41 +167,22 @@ const Enrollments = () => {
 
   return (
     <div className="min-h-screen bg-[#E0E1DD] p-8 font-sans text-[#0D1B2A]">
-      
-      {/* Header Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[#0D1B2A] mb-4">Enrollments</h1>
-        
-        {/* Search Bar */}
         <input
           type="text"
           placeholder="Search courses by name or code..."
-          className="w-full max-w-2xl px-4 py-3 rounded-lg border border-[#778DA9] focus:outline-none focus:ring-2 focus:ring-[#415A77] bg-white"
+          className="input-field"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
-      {/* Filter Buttons */}
       <div className="flex gap-4 mb-6">
-        <button
-          onClick={() => setFilter("all")}
-          className={`px-6 py-2 rounded-md font-medium transition-colors ${
-            filter === "all" 
-              ? "bg-[#1B263B] text-white" 
-              : "bg-white text-[#415A77] border border-[#778DA9] hover:bg-[#E0E1DD]"
-          }`}
-        >
+        <button onClick={() => setFilter("all")} className={filter === "all" ? "btn-secondary-active" : "btn-secondary"}>
           All Courses
         </button>
-        <button
-          onClick={() => setFilter("selected")}
-          className={`px-6 py-2 rounded-md font-medium transition-colors flex items-center gap-2 ${
-            filter === "selected" 
-              ? "bg-[#1B263B] text-white" 
-              : "bg-white text-[#415A77] border border-[#778DA9] hover:bg-[#E0E1DD]"
-          }`}
-        >
+        <button onClick={() => setFilter("selected")} className={filter === "selected" ? "btn-secondary-active flex items-center gap-2" : "btn-secondary flex items-center gap-2"}>
           Selected Courses
           <span className="bg-[#415A77] text-[#E0E1DD] text-xs py-0.5 px-2 rounded-full">
             {selectedCourseIds.size}
@@ -108,11 +190,10 @@ const Enrollments = () => {
         </button>
       </div>
 
-      {/* Main Content Area / Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="table-container">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-[#f8f9fa] text-[#415A77] border-b border-gray-200 text-sm">
+            <tr className="table-header">
               <th className="p-4 w-16 text-center">Select</th>
               <th className="p-4 font-semibold">Course Code</th>
               <th className="p-4 font-semibold">Title</th>
@@ -124,7 +205,7 @@ const Enrollments = () => {
           <tbody>
             {filteredCourses.length > 0 ? (
               filteredCourses.map((course) => (
-                <tr key={course._id} className="border-b border-gray-100 hover:bg-[#E0E1DD]/30 transition-colors">
+                <tr key={course._id} className="table-row">
                   <td className="p-4 text-center">
                     <input
                       type="checkbox"
@@ -138,10 +219,8 @@ const Enrollments = () => {
                   <td className="p-4 text-[#778DA9]">{course.department}</td>
                   <td className="p-4 text-center">{course.creditHours}</td>
                   <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                      course.type === 'core' ? 'bg-[#1B263B]/10 text-[#1B263B]' : 'bg-[#778DA9]/20 text-[#415A77]'
-                    }`}>
-                      {course.type}
+                    <span className={course.type === 'core' ? 'badge-core' : 'badge-elective'}>
+                      {course.type || "N/A"}
                     </span>
                   </td>
                 </tr>
@@ -157,28 +236,25 @@ const Enrollments = () => {
         </table>
       </div>
 
-      {/* Action Buttons */}
       <div className="mt-8 flex justify-end">
         <button
           onClick={handleEnrollSubmit}
           disabled={selectedCourseIds.size === 0}
-          className="px-8 py-3 bg-[#415A77] text-white rounded-lg font-bold shadow-md hover:bg-[#1B263B] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="btn-primary"
         >
           Confirm Enrollment
         </button>
       </div>
 
-      {/* Success Popup Modal */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-[#0D1B2A]/40 z-50">
           <div className="bg-white p-8 rounded-xl shadow-xl max-w-sm w-full text-center border-t-4 border-[#415A77]">
             <div className="text-4xl mb-4">✅</div>
             <h2 className="text-2xl font-bold text-[#1B263B] mb-2">Enrollment Successful!</h2>
-            <p className="text-[#778DA9]">Your course selections have been saved for the upcoming academic year.</p>
+            <p className="text-[#778DA9]">Your course selections have been submitted for approval.</p>
           </div>
         </div>
       )}
-
     </div>
   );
 };

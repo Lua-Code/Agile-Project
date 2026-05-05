@@ -133,3 +133,51 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+@layer components {
+  .btn-primary {
+    @apply px-8 py-3 bg-[#415A77] text-white rounded-lg font-bold shadow-md hover:bg-[#1B263B] disabled:opacity-50 disabled:cursor-not-allowed transition-all;
+  }
+  .btn-secondary {
+    @apply px-6 py-2 rounded-md font-medium transition-colors bg-white text-[#415A77] border border-[#778DA9] hover:bg-[#E0E1DD];
+  }
+  .btn-secondary-active {
+    @apply px-6 py-2 rounded-md font-medium transition-colors bg-[#1B263B] text-white;
+  }
+  .btn-success {
+    @apply px-4 py-2 bg-green-600 text-white rounded-md font-bold shadow-sm hover:bg-green-700 disabled:opacity-50 transition-all text-sm;
+  }
+  .btn-danger {
+    @apply px-4 py-2 bg-red-600 text-white rounded-md font-bold shadow-sm hover:bg-red-700 disabled:opacity-50 transition-all text-sm;
+  }
+  .input-field {
+    @apply w-full max-w-2xl px-4 py-3 rounded-lg border border-[#778DA9] focus:outline-none focus:ring-2 focus:ring-[#415A77] bg-white text-black;
+  }
+  .table-container {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full;
+  }
+  .table-header {
+    @apply bg-[#f8f9fa] text-[#415A77] border-b border-gray-200 text-sm;
+  }
+  .table-row {
+    @apply border-b border-gray-100 hover:bg-[#E0E1DD]/30 transition-colors;
+  }
+  .badge-core {
+    @apply bg-[#1B263B]/10 text-[#1B263B] px-3 py-1 rounded-full text-xs font-medium capitalize;
+  }
+  .badge-elective {
+    @apply bg-[#778DA9]/20 text-[#415A77] px-3 py-1 rounded-full text-xs font-medium capitalize;
+  }
+  .badge-status-pending {
+    @apply bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium capitalize;
+  }
+  .badge-status-enrolled {
+    @apply bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium capitalize;
+  }
+  .badge-status-dropped {
+    @apply bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium capitalize;
+  }
+  .badge-status-completed {
+    @apply bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium capitalize;
+  }
+}
