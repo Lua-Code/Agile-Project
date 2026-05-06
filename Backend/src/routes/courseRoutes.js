@@ -1,9 +1,10 @@
 import express from "express";
 const router = express.Router();
-import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 
 import {
   getCourses,
+  getCourseById,
   createCourse,
   updateCourse,
   deleteCourse,
@@ -15,9 +16,10 @@ router.use(requireAuth);
 
 router.get("/check-code", checkCourseCode);
 router.get("/", getCourses);
-router.post("/", createCourse);
-router.put("/:id", updateCourse);
-router.delete("/:id", deleteCourse);
+router.get("/:id", getCourseById);
+router.post("/", requireRole("admin"), createCourse);
+router.put("/:id", requireRole("admin"), updateCourse);
+router.delete("/:id", requireRole("admin"), deleteCourse);
 router.get("/my-courses", getMyCourses);
 
 export default router;

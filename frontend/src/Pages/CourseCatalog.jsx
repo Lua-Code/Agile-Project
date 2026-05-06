@@ -149,7 +149,7 @@ function CourseCatalog() {
           {isAdmin && (
             <button
               style={styles.addButton}
-              onClick={() => navigate("/create-courses")}
+              onClick={() => navigate("/create-course")}
             >
               + Add Course
             </button>
