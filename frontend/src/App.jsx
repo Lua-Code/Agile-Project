@@ -14,6 +14,8 @@ import CreateStudent from "./Pages/CreateStudent";
 import Materials from "./Pages/Materials";
 import Resources from "./Pages/Resources";
 import EmployeePortal from "./Pages/EmployeePortal";
+import AdmissionApplication from "./Pages/AdmissionApplication";
+import ApproveApplications from "./Pages/ApproveApplications";
 
 // LAYOUT + AUTH
 import MainLayout from "./Layouts/MainLayout";
@@ -35,6 +37,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/admission-application" element={<AdmissionApplication />} />
 
         <Route element={<MainLayout />}>
           <Route
@@ -144,6 +147,15 @@ function App() {
               </PrivateRoute>
             }
           />  
+
+          <Route
+            path="/approve-applications"
+            element={
+              <PrivateRoute>
+                <ApproveApplications />
+              </PrivateRoute>
+            }
+          />
 
         </Route>
 
