@@ -57,9 +57,9 @@ export default function Sidebar({ isOpen }) {
                     </NavLink>
 
                     {
-                        isAdmin && (
+                        (isAdmin || isStudent) && (
                             <NavLink to="/enrollments" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                                View Enrollment Requests
+                                {isAdmin ? "View Enrollment Requests" : "My Enrollments"}
                             </NavLink>)
                     }
 
