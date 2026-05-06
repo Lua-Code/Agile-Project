@@ -3,6 +3,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import dotenv from "dotenv";
+import path from "path";
+
 
 dotenv.config();
 
@@ -34,6 +36,7 @@ app.use(
     },
   })
 );
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/api", routes);
 

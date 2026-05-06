@@ -1,8 +1,34 @@
 import { NavLink } from "react-router-dom";
 import { useLogout } from "../hooks/useLogout";
+import { useState, useEffect } from "react";
+import api from "../Api/axios";
 
 export default function Sidebar({ isOpen }) {
+    const [currentUser, setCurrentUser] = useState(null);
     const { logout } = useLogout();
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const { data } = await api.get("/auth/me", {
+                    withCredentials: true,
+                });
+
+                setCurrentUser(data.user);
+            } catch (err) {
+                setCurrentUser(null);
+            }
+        };
+
+        fetchCurrentUser();
+    }, []);
+
+    const role = currentUser?.role;
+
+    const isAdmin = role === "admin";
+    const isStudent = role === "student";
+    const isProfessorOrTa = role === "professor" || role === "ta";
+    const isEmployee = role === "employee";
 
     return (
         <aside
@@ -22,10 +48,6 @@ export default function Sidebar({ isOpen }) {
                         Dashboard
                     </NavLink>
 
-                    <NavLink to="/students" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        Student Records
-                    </NavLink>
-
                     <NavLink to="/courses" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                         Courses
                     </NavLink>
@@ -34,13 +56,42 @@ export default function Sidebar({ isOpen }) {
                         Rooms
                     </NavLink>
 
-                    <NavLink to="/enrollments" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        Enrollments
-                    </NavLink>
+                    {
+                        (isAdmin || isStudent) && (
+                            <NavLink to="/enrollments" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                                {isAdmin ? "View Enrollment Requests" : "My Enrollments"}
+                            </NavLink>)
+                    }
 
-                    <NavLink to="/transcripts" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        Transcripts
-                    </NavLink>
+                    {(isAdmin) && (
+                        <NavLink to="/students" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            View Student Records
+                        </NavLink>)
+                    }
+
+                    {(!isProfessorOrTa) && (
+                        <NavLink to="/transcripts" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            {isAdmin ? "View Transcripts" : "Request Transcripts"}
+                        </NavLink>)
+                    }
+
+                    {(!isAdmin) && (
+                        <NavLink to="/materials" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            {isProfessorOrTa ? "Upload Course Materials" : "View Course Materials"}
+                        </NavLink>
+                    )}
+
+                    {(isAdmin) && (
+                        <NavLink to="/resources" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Manage Resources
+                        </NavLink>
+                    )}
+                    {isProfessorOrTa && (
+                        <NavLink to="/employee-portal" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Employee Portal
+                        </NavLink>
+                    )}
+
                 </nav>
 
             </div>
@@ -54,7 +105,7 @@ const styles = {
         color: "#ffffff",
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
+        height: "100%",
     },
 
     logo: {

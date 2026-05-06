@@ -6,6 +6,11 @@ const studentSchema = new mongoose.Schema({
     ref: "User",
     required: true
   },
+  studentId: {
+    type: Number,
+    required: true,
+    unique: true,
+  },
   department: {
     type: String,
     required: true

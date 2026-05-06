@@ -1,28 +1,22 @@
-import jwt from "jsonwebtoken";
-import User from "../models/User.js";
-
-export const protect = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Not authorized, no token" });
+export const requireAuth = (req, res, next) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
-  try {
-    const token = authHeader.split(" ")[1];
+  req.user = req.session.user; 
+  next();
+};
 
-    const { id } = jwt.verify(token, process.env.JWT_SECRET);
-
-    const user = await User.findById(id).select("_id role");
-    if (!user) {
-      return res.status(401).json({ message: 'Not authorized, user no longer exists' });
+export const requireRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-    req.user = user;
-    next()
 
-  } catch (error) {
-    error.statusCode = 401
-    error.message = 'Request is not authorized'
-    next(error)
-  }
+    if (!roles.includes(req.session.user.role)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    next();
+  };
 };

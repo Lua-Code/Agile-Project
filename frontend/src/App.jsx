@@ -10,6 +10,11 @@ import Rooms from "./Pages/Rooms";
 import Enrollment from "./Pages/Enrollment";
 import Transcripts from "./Pages/Transcripts";
 import CreateCourse from "./Pages/CreateCourse";
+import EditCourse from "./Pages/EditCourse";
+import CreateStudent from "./Pages/CreateStudent";
+import Materials from "./Pages/Materials";
+import Resources from "./Pages/Resources";
+import EmployeePortal from "./Pages/EmployeePortal";
 
 // LAYOUT + AUTH
 import MainLayout from "./Layouts/MainLayout";
@@ -97,13 +102,59 @@ function App() {
           />
 
           <Route
-            path="/create-courses"
+            path="/create-course"
             element={
               <PrivateRoute>
                 <CreateCourse />
               </PrivateRoute>
             }
           />
+
+          <Route
+            path="/edit-course/:id"
+            element={
+              <PrivateRoute>
+                <EditCourse />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/create-student"
+            element={
+              <PrivateRoute>
+                <CreateStudent />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/materials"
+            element={
+              <PrivateRoute>
+                <Materials />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/employee-portal"
+            element={
+              <PrivateRoute>
+                <EmployeePortal />
+              </PrivateRoute>
+            }
+          />  
+
+          <Route
+            path="/resources"
+            element={
+              <PrivateRoute>
+                <Resources />
+              </PrivateRoute>
+            }
+          />  
+
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
