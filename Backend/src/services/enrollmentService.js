@@ -14,17 +14,24 @@ export const requestEnrollmentService = async (userId, courseId) => {
     const semester = "Spring";
     const academicYear = "2026";
 
-    const existingEnrollment = await Enrollment.findOne({
-        studentId: userId,
+    let enrollment = await Enrollment.findOne({
+        studentId: student._id,
         courseId,
         semester,
-        academicYear,
-        status: { $in: ["pending", "approved"] },});
+        academicYear
+    });
 
-    if (existingEnrollment) {
-        const error = new Error("You have already requested enrollment for this course in the current semester");
-        error.statusCode = 400;
-        throw error;
+    if (enrollment) {
+        if (["pending", "approved", "completed"].includes(enrollment.status)) {
+            const error = new Error(`You have already requested enrollment for this course (${enrollment.status})`);
+            error.statusCode = 400;
+            throw error;
+        }
+        
+        // If rejected or dropped, update to pending
+        enrollment.status = "pending";
+        await enrollment.save();
+        return enrollment;
     }
 
     return await Enrollment.create({
@@ -34,7 +41,6 @@ export const requestEnrollmentService = async (userId, courseId) => {
         academicYear : "2026",
         status: "pending"
     });
-    await enrollment.save();
 }
 
 export const getEnrollmentRequestsService = async () => {
@@ -61,6 +67,30 @@ export const getMyEnrollmentRequestsService = async (userId) => {
 
   return await Enrollment.find({
     studentId: student._id,
-    status: { $in: ["pending", "approved"] },
-  }).select("courseId status");
+  }).populate("courseId", "courseCode title type department creditHours")
+    .select("courseId status semester academicYear");
+};
+
+export const updateEnrollmentStatusService = async (id, status) => {
+  const validStatuses = ["approved", "rejected"];
+  
+  if (!validStatuses.includes(status)) {
+      const error = new Error("Invalid status update");
+      error.statusCode = 400;
+      throw error;
+  }
+  
+  const enrollment = await Enrollment.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+  );
+
+  if (!enrollment) {
+      const error = new Error("Enrollment not found");
+      error.statusCode = 404;
+      throw error;
+  }
+
+  return enrollment;
 };

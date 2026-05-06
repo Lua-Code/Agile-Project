@@ -5,7 +5,7 @@ import api from "../Api/axios";
 function CourseCatalog() {
   const [currentUser, setCurrentUser] = useState(null);
   const [courses, setCourses] = useState([]);
-  const [requestedCourseIds, setRequestedCourseIds] = useState([]);
+  const [enrollmentStatuses, setEnrollmentStatuses] = useState({});
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ function CourseCatalog() {
         { withCredentials: true }
       );
 
-      setRequestedCourseIds((prev) => [...prev, courseId]);
+      setEnrollmentStatuses((prev) => ({ ...prev, [courseId]: "pending" }));
 
       alert(res.data.message || "Enrollment request submitted");
     } catch (err) {
@@ -111,9 +111,14 @@ function CourseCatalog() {
           withCredentials: true,
         });
 
-        const ids = data.map((request) => request.courseId);
+        const statusMap = {};
+        data.forEach((request) => {
+          if (request.courseId) {
+            statusMap[request.courseId._id] = request.status;
+          }
+        });
 
-        setRequestedCourseIds(ids);
+        setEnrollmentStatuses(statusMap);
       } catch (err) {
         console.error("Failed to fetch enrollment requests:", err.response?.data || err.message);
       }
@@ -207,7 +212,8 @@ function CourseCatalog() {
 
               <tbody>
                 {filteredCourses.map((course) => {
-                  const isRequested = requestedCourseIds.includes(course.id);
+                  const status = enrollmentStatuses[course.id];
+                  const canEnroll = !status || status === "rejected" || status === "dropped";
 
                   return (
                     <tr key={course.id}>
@@ -255,18 +261,36 @@ function CourseCatalog() {
                           )}
 
                           {isStudent && (
-                            <button
-                              style={{
-                                ...styles.enrollButton,
-                                ...(isRequested
-                                  ? styles.disabledEnrollButton
-                                  : {}),
-                              }}
-                              disabled={isRequested}
-                              onClick={() => handleEnroll(course.id)}
-                            >
-                              {isRequested ? "Requested" : "Enroll"}
-                            </button>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              {status && (
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    fontWeight: "bold",
+                                    color:
+                                      status === "approved"
+                                        ? "#15803d"
+                                        : status === "rejected"
+                                        ? "#b91c1c"
+                                        : "#b45309",
+                                  }}
+                                >
+                                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                                </span>
+                              )}
+                              <button
+                                style={{
+                                  ...styles.enrollButton,
+                                  ...(!canEnroll
+                                    ? styles.disabledEnrollButton
+                                    : {}),
+                                }}
+                                disabled={!canEnroll}
+                                onClick={() => handleEnroll(course.id)}
+                              >
+                                {status === "rejected" ? "Enroll Again" : (canEnroll ? "Enroll" : "Requested")}
+                              </button>
+                            </div>
                           )}
 
                         </td>

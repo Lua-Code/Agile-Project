@@ -1,4 +1,4 @@
-import { requestEnrollmentService, getEnrollmentRequestsService, getMyEnrollmentRequestsService } from "../services/enrollmentService.js";
+import { requestEnrollmentService, getEnrollmentRequestsService, getMyEnrollmentRequestsService, updateEnrollmentStatusService } from "../services/enrollmentService.js";
 
 export const requestEnrollment = async (req, res) => {
     try {
@@ -40,6 +40,23 @@ export const getMyEnrollmentRequests = async (req, res) => {
     } catch (err) {
         res.status(err.statusCode || 500).json({
             message: err.message || "Failed to fetch enrollment requests",
+        });
+    }
+};
+
+export const updateEnrollmentStatus = async (req, res) => {
+    try {
+        const enrollment = await updateEnrollmentStatusService(
+            req.params.id,
+            req.body.status
+        );
+        res.status(200).json({
+            message: "Enrollment status updated successfully",
+            enrollment,
+        });
+    } catch (err) {
+        res.status(err.statusCode || 500).json({
+            message: err.message || "Failed to update enrollment status",
         });
     }
 };
