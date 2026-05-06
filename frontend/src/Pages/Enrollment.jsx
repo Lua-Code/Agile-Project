@@ -1,293 +1,262 @@
-import { useState, useEffect } from "react";
-import api from "../Api/axios";
-import { useAuthContext } from "../hooks/useAuthContext";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuthContext } from '../hooks/useAuthContext';
 
-export default function Enrollment() {
+const Enrollments = () => {
   const { user } = useAuthContext();
-  const [requests, setRequests] = useState([]);
+  
+  // Student View State
+  const [courses, setCourses] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState("all"); // "all" or "selected"
+  const [selectedCourseIds, setSelectedCourseIds] = useState(new Set());
+  const [showPopup, setShowPopup] = useState(false);
+
+  // Admin View State
+  const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!user || (user.role !== "admin" && user.role !== "student")) return;
-    fetchRequests();
+    const fetchData = async () => {
+      try {
+        if (user?.role === "admin") {
+          const response = await axios.get('http://localhost:5000/api/enrollments', { withCredentials: true });
+          setEnrollments(response.data.data || []);
+        } else {
+          const response = await axios.get('http://localhost:5000/api/courses', { withCredentials: true });
+          setCourses(response.data.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
   }, [user]);
 
-  const fetchRequests = async () => {
+  // Student Handlers
+  const handleCheckboxChange = (courseId) => {
+    setSelectedCourseIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(courseId)) newSet.delete(courseId);
+      else newSet.add(courseId);
+      return newSet;
+    });
+  };
+
+  const handleEnrollSubmit = async () => {
+    if (selectedCourseIds.size === 0) return;
+    
     try {
-      setLoading(true);
-      const endpoint =
-        user.role === "admin"
-          ? "/enrollments/requests"
-          : "/enrollments/requests/my-requests";
-      const { data } = await api.get(endpoint, { withCredentials: true });
-      setRequests(data);
-    } catch (err) {
-      setError("Failed to fetch enrollment requests.");
-    } finally {
-      setLoading(false);
+      await axios.post('http://localhost:5000/api/enrollments', {
+        studentId: user?._id || user?.id,
+        courseIds: Array.from(selectedCourseIds),
+        semester: "Fall", // Could be dynamic
+        academicYear: "2026-2027" // Could be dynamic
+      }, { withCredentials: true });
+      
+      setShowPopup(true);
+      setSelectedCourseIds(new Set());
+      setTimeout(() => setShowPopup(false), 3000);
+    } catch (error) {
+      console.error("Error creating enrollments:", error);
+      alert("Failed to enroll. " + (error.response?.data?.message || ""));
     }
   };
 
-  const handleStatusUpdate = async (id, status) => {
+  // Admin Handlers
+  const handleUpdateStatus = async (enrollmentId, newStatus) => {
     try {
-      await api.put(`/enrollments/${id}/status`, { status }, { withCredentials: true });
-      // Remove the processed request from the UI
-      setRequests((prev) => prev.filter((req) => req._id !== id));
-    } catch (err) {
-      alert("Failed to update status");
+      await axios.patch(`http://localhost:5000/api/enrollments/${enrollmentId}/status`, {
+        status: newStatus
+      }, { withCredentials: true });
+      
+      setEnrollments(prev => prev.map(enr => 
+        enr._id === enrollmentId ? { ...enr, status: newStatus } : enr
+      ));
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update status.");
     }
   };
 
-  if (!user || (user.role !== "admin" && user.role !== "student")) {
+  if (loading) {
+    return <div className="min-h-screen bg-[#E0E1DD] p-8 font-sans text-[#0D1B2A]">Loading...</div>;
+  }
+
+  // --- ADMIN VIEW ---
+  if (user?.role === "admin") {
     return (
-      <div style={styles.page}>
-        <main style={styles.main}>
-          <header style={styles.header}>
-            <div>
-              <h1 style={styles.title}>Enrollment</h1>
-              <p style={styles.subtitle}>This is the Enrollment page.</p>
-            </div>
-          </header>
-        </main>
+      <div className="min-h-screen bg-[#E0E1DD] p-8 font-sans text-[#0D1B2A]">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#0D1B2A] mb-4">Manage Enrollments</h1>
+        </div>
+
+        <div className="table-container">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="table-header">
+                <th className="p-4 font-semibold">Student</th>
+                <th className="p-4 font-semibold">Course</th>
+                <th className="p-4 font-semibold">Term</th>
+                <th className="p-4 font-semibold">Status</th>
+                <th className="p-4 font-semibold text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {enrollments.length > 0 ? (
+                enrollments.map((enr) => (
+                  <tr key={enr._id} className="table-row">
+                    <td className="p-4">
+                      <div className="font-medium text-[#1B263B]">
+                        {enr.studentId?.firstName} {enr.studentId?.lastName}
+                      </div>
+                      <div className="text-xs text-[#778DA9]">{enr.studentId?.studentIdNumber || "N/A"}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-medium text-[#1B263B]">{enr.courseId?.courseCode}</div>
+                      <div className="text-xs text-[#778DA9]">{enr.courseId?.title}</div>
+                    </td>
+                    <td className="p-4 text-[#778DA9]">{enr.semester} {enr.academicYear}</td>
+                    <td className="p-4">
+                      <span className={`badge-status-${enr.status}`}>
+                        {enr.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex gap-2 justify-center">
+                        {enr.status === "pending" && (
+                          <>
+                            <button onClick={() => handleUpdateStatus(enr._id, "enrolled")} className="btn-success">Approve</button>
+                            <button onClick={() => handleUpdateStatus(enr._id, "dropped")} className="btn-danger">Reject</button>
+                          </>
+                        )}
+                        {enr.status === "enrolled" && (
+                          <button onClick={() => handleUpdateStatus(enr._id, "dropped")} className="btn-danger">Drop</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-[#778DA9]">
+                    No enrollments found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
 
-  const isAdmin = user.role === "admin";
+  // --- STUDENT VIEW ---
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch = 
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      course.courseCode.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesFilter = filter === "all" ? true : selectedCourseIds.has(course._id);
+
+    return matchesSearch && matchesFilter;
+  });
 
   return (
-    <div style={styles.page}>
-      <main style={styles.main}>
-        <header style={styles.header}>
-          <div>
-            <h1 style={styles.title}>
-              {isAdmin ? "Enrollment Requests" : "My Enrollments"}
-            </h1>
-            <p style={styles.subtitle}>
-              {isAdmin
-                ? "Review and manage pending student course enrollments."
-                : "View the status of your enrolled courses."}
-            </p>
-          </div>
-        </header>
+    <div className="min-h-screen bg-[#E0E1DD] p-8 font-sans text-[#0D1B2A]">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-[#0D1B2A] mb-4">Enrollments</h1>
+        <input
+          type="text"
+          placeholder="Search courses by name or code..."
+          className="input-field"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
 
-        {loading && <p>Loading requests...</p>}
-        {error && <p style={{ color: "#ef4444" }}>{error}</p>}
+      <div className="flex gap-4 mb-6">
+        <button onClick={() => setFilter("all")} className={filter === "all" ? "btn-secondary-active" : "btn-secondary"}>
+          All Courses
+        </button>
+        <button onClick={() => setFilter("selected")} className={filter === "selected" ? "btn-secondary-active flex items-center gap-2" : "btn-secondary flex items-center gap-2"}>
+          Selected Courses
+          <span className="bg-[#415A77] text-[#E0E1DD] text-xs py-0.5 px-2 rounded-full">
+            {selectedCourseIds.size}
+          </span>
+        </button>
+      </div>
 
-        {!loading && !error && requests.length === 0 && (
-          <div style={styles.tableCard}>
-            <p style={{ textAlign: "center", color: "#64748b" }}>
-              {isAdmin
-                ? "No pending enrollment requests."
-                : "You have not enrolled in any courses yet."}
-            </p>
-          </div>
-        )}
-
-        {!loading && !error && requests.length > 0 && (
-          <section style={styles.tableCard}>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  {isAdmin ? (
-                    <>
-                      <th style={styles.th}>Student Name</th>
-                      <th style={styles.th}>Student Email</th>
-                      <th style={styles.th}>Course Code</th>
-                      <th style={styles.th}>Course Title</th>
-                      <th style={styles.th}>Actions</th>
-                    </>
-                  ) : (
-                    <>
-                      <th style={styles.th}>Course Code</th>
-                      <th style={styles.th}>Title</th>
-                      <th style={styles.th}>Department</th>
-                      <th style={styles.th}>Credits</th>
-                      <th style={styles.th}>Type</th>
-                      <th style={styles.th}>Status</th>
-                    </>
-                  )}
+      <div className="table-container">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="table-header">
+              <th className="p-4 w-16 text-center">Select</th>
+              <th className="p-4 font-semibold">Course Code</th>
+              <th className="p-4 font-semibold">Title</th>
+              <th className="p-4 font-semibold">Department</th>
+              <th className="p-4 font-semibold">Credits</th>
+              <th className="p-4 font-semibold">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredCourses.length > 0 ? (
+              filteredCourses.map((course) => (
+                <tr key={course._id} className="table-row">
+                  <td className="p-4 text-center">
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 accent-[#415A77] cursor-pointer"
+                      checked={selectedCourseIds.has(course._id)}
+                      onChange={() => handleCheckboxChange(course._id)}
+                    />
+                  </td>
+                  <td className="p-4 font-medium text-[#1B263B]">{course.courseCode}</td>
+                  <td className="p-4">{course.title}</td>
+                  <td className="p-4 text-[#778DA9]">{course.department}</td>
+                  <td className="p-4 text-center">{course.creditHours}</td>
+                  <td className="p-4">
+                    <span className={course.type === 'core' ? 'badge-core' : 'badge-elective'}>
+                      {course.type || "N/A"}
+                    </span>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {requests.map((req) => (
-                  <tr key={req._id}>
-                    {isAdmin ? (
-                      <>
-                        <td style={styles.td}>
-                          {req.studentId?.userId?.fullName || "N/A"}
-                        </td>
-                        <td style={styles.td}>
-                          {req.studentId?.userId?.email || "N/A"}
-                        </td>
-                        <td style={styles.td}>
-                          <span style={styles.courseCodeBadge}>
-                            {req.courseId?.courseCode || "N/A"}
-                          </span>
-                        </td>
-                        <td style={styles.td}>{req.courseId?.title || "N/A"}</td>
-                        <td style={styles.td}>
-                          <button
-                            style={styles.approveButton}
-                            onClick={() => handleStatusUpdate(req._id, "approved")}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            style={styles.rejectButton}
-                            onClick={() => handleStatusUpdate(req._id, "rejected")}
-                          >
-                            Reject
-                          </button>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td style={styles.td}>
-                          <span style={styles.courseCodeBadge}>
-                            {req.courseId?.courseCode || "N/A"}
-                          </span>
-                        </td>
-                        <td style={styles.td}>{req.courseId?.title || "N/A"}</td>
-                        <td style={styles.td}>{req.courseId?.department || "N/A"}</td>
-                        <td style={styles.td}>{req.courseId?.creditHours || "N/A"}</td>
-                        <td style={styles.td}>
-                          <span
-                            style={{
-                              ...styles.typeBadge,
-                              background:
-                                req.courseId?.type === "Core" || req.courseId?.type === "core"
-                                  ? "#e2e8f0"
-                                  : "#fef3c7",
-                            }}
-                          >
-                            {req.courseId?.type === "core" || req.courseId?.type === "Core" ? "Core" : "Elective"}
-                          </span>
-                        </td>
-                        <td style={styles.td}>
-                          <span
-                            style={{
-                              fontSize: "13px",
-                              fontWeight: "bold",
-                              color:
-                                req.status === "approved"
-                                  ? "#15803d"
-                                  : req.status === "rejected"
-                                  ? "#b91c1c"
-                                  : "#b45309",
-                            }}
-                          >
-                            {req.status ? req.status.charAt(0).toUpperCase() + req.status.slice(1) : "N/A"}
-                          </span>
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-        )}
-      </main>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="p-8 text-center text-[#778DA9]">
+                  No courses found matching your criteria.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-8 flex justify-end">
+        <button
+          onClick={handleEnrollSubmit}
+          disabled={selectedCourseIds.size === 0}
+          className="btn-primary"
+        >
+          Confirm Enrollment
+        </button>
+      </div>
+
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-[#0D1B2A]/40 z-50">
+          <div className="bg-white p-8 rounded-xl shadow-xl max-w-sm w-full text-center border-t-4 border-[#415A77]">
+            <div className="text-4xl mb-4">✅</div>
+            <h2 className="text-2xl font-bold text-[#1B263B] mb-2">Enrollment Successful!</h2>
+            <p className="text-[#778DA9]">Your course selections have been submitted for approval.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-const styles = {
-  page: {
-    display: "flex",
-    background: "#f8fafc",
-    fontFamily: "Arial, sans-serif",
-    height: "100%",
-  },
-
-  main: {
-    flex: 1,
-    padding: "36px",
-    overflowY: "auto",
-  },
-
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "28px",
-  },
-
-  title: {
-    margin: 0,
-    fontSize: "38px",
-    color: "#0f172a",
-  },
-
-  subtitle: {
-    marginTop: "8px",
-    color: "#64748b",
-    fontSize: "16px",
-  },
-
-  tableCard: {
-    background: "#ffffff",
-    borderRadius: "22px",
-    padding: "24px",
-    boxShadow: "0 15px 35px rgba(15, 23, 42, 0.08)",
-    overflowX: "auto",
-  },
-
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-
-  th: {
-    textAlign: "left",
-    padding: "16px",
-    color: "#475569",
-    borderBottom: "1px solid #e2e8f0",
-  },
-
-  td: {
-    padding: "16px",
-    borderBottom: "1px solid #e2e8f0",
-    color: "#0f172a",
-  },
-
-  courseCodeBadge: {
-    background: "#f1f5f9",
-    color: "#475569",
-    padding: "6px 12px",
-    borderRadius: "8px",
-    fontWeight: "700",
-    fontSize: "13px",
-  },
-
-  typeBadge: {
-    padding: "6px 12px",
-    borderRadius: "999px",
-    fontWeight: "700",
-    fontSize: "13px",
-    display: "inline-block",
-  },
-
-  approveButton: {
-    padding: "8px 16px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#dcfce7",
-    color: "#15803d",
-    fontWeight: "600",
-    cursor: "pointer",
-    marginRight: "8px",
-  },
-
-  rejectButton: {
-    padding: "8px 16px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#fee2e2",
-    color: "#b91c1c",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
 };
+
+export default Enrollments;

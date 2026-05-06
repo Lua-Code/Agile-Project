@@ -1,4 +1,32 @@
+import * as enrollmentService from "../services/enrollmentService.js";
 import { requestEnrollmentService, getEnrollmentRequestsService, getMyEnrollmentRequestsService, updateEnrollmentStatusService } from "../services/enrollmentService.js";
+
+export const getEnrollments = async (req, res, next) => {
+  try {
+    const enrollments = await enrollmentService.getAllEnrollments();
+    res.status(200).json({ success: true, count: enrollments.length, data: enrollments });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createEnrollments = async (req, res, next) => {
+  try {
+    const { studentId, courseIds, semester, academicYear } = req.body;
+    
+    if (!studentId || !courseIds || courseIds.length === 0 || !semester || !academicYear) {
+      return res.status(400).json({ success: false, message: "Please provide all required fields." });
+    }
+
+    const enrollments = await enrollmentService.createEnrollment(studentId, courseIds, semester, academicYear);
+    res.status(201).json({ success: true, data: enrollments });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: "One or more enrollments already exist." });
+    }
+    next(error);
+  }
+};
 
 export const requestEnrollment = async (req, res) => {
     try {

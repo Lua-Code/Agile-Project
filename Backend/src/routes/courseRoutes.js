@@ -1,4 +1,6 @@
 import express from "express";
+import { getCourses } from "../controllers/courseController.js";
+
 const router = express.Router();
 import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 
