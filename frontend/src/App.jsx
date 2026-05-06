@@ -15,10 +15,11 @@ import CreateStudent from "./Pages/CreateStudent";
 import Materials from "./Pages/Materials";
 import Resources from "./Pages/Resources";
 import EmployeePortal from "./Pages/EmployeePortal";
+import Messages from "./Pages/Messages";
+
 import AdmissionApplication from "./Pages/AdmissionApplication";
 import ApproveApplications from "./Pages/ApproveApplications";
 
-// LAYOUT + AUTH
 import MainLayout from "./Layouts/MainLayout";
 import { useAuthContext } from "./hooks/useAuthContext";
 import { useAuthInit } from "./hooks/useAuthInit";
@@ -26,7 +27,7 @@ import { useAuthInit } from "./hooks/useAuthInit";
 function PrivateRoute({ children }) {
   const { user, loading } = useAuthContext();
 
-  if (loading) return null; 
+  if (loading) return null;
 
   return user ? children : <Navigate to="/login" replace />;
 }
@@ -41,76 +42,45 @@ function App() {
         <Route path="/admission-application" element={<AdmissionApplication />} />
 
         <Route element={<MainLayout />}>
+
           <Route
             path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><Dashboard /></PrivateRoute>}
           />
 
           <Route
             path="/students"
-            element={
-              <PrivateRoute>
-                <StudentRecords />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><StudentRecords /></PrivateRoute>}
           />
 
           <Route
             path="/book-room"
-            element={
-              <PrivateRoute>
-                <BookRoom />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><BookRoom /></PrivateRoute>}
           />
 
           <Route
             path="/courses"
-            element={
-              <PrivateRoute>
-                <CourseCatalog />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><CourseCatalog /></PrivateRoute>}
           />
 
           <Route
             path="/rooms"
-            element={
-              <PrivateRoute>
-                <Rooms />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><Rooms /></PrivateRoute>}
           />
 
           <Route
             path="/enrollments"
-            element={
-              <PrivateRoute>
-                <Enrollment />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><Enrollment /></PrivateRoute>}
           />
 
           <Route
             path="/transcripts"
-            element={
-              <PrivateRoute>
-                <Transcripts />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><Transcripts /></PrivateRoute>}
           />
 
           <Route
             path="/create-course"
-            element={
-              <PrivateRoute>
-                <CreateCourse />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><CreateCourse /></PrivateRoute>}
           />
 
           <Route
@@ -124,24 +94,23 @@ function App() {
 
           <Route
             path="/create-student"
-            element={
-              <PrivateRoute>
-                <CreateStudent />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><CreateStudent /></PrivateRoute>}
           />
 
           <Route
             path="/materials"
-            element={
-              <PrivateRoute>
-                <Materials />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><Materials /></PrivateRoute>}
           />
 
           <Route
             path="/employee-portal"
+            element={<PrivateRoute><EmployeePortal /></PrivateRoute>}
+          />
+
+          
+          <Route
+            path="/messages"
+            element={<PrivateRoute><Messages /></PrivateRoute>}
             element={
               <PrivateRoute>
                 <EmployeePortal />
