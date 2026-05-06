@@ -57,9 +57,9 @@ export default function Sidebar({ isOpen }) {
                     </NavLink>
 
                     {
-                        isAdmin && (
+                        (isAdmin || isStudent) && (
                             <NavLink to="/enrollments" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                                View Enrollment Requests
+                                {isAdmin ? "View Enrollment Requests" : "My Enrollments"}
                             </NavLink>)
                     }
 
@@ -81,9 +81,21 @@ export default function Sidebar({ isOpen }) {
                         </NavLink>
                     )}
 
+                    {(isAdmin) && (
+                        <NavLink to="/resources" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Manage Resources
+                        </NavLink>
+                    )}
+                    
                     {isProfessorOrTa && (
                         <NavLink to="/employee-portal" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             Employee Portal
+                        </NavLink>
+                    )}
+
+                    {(isAdmin) && (
+                        <NavLink to="/approve-applications" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Approve Applications
                         </NavLink>
                     )}
 

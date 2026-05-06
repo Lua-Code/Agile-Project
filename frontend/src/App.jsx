@@ -10,11 +10,15 @@ import Rooms from "./Pages/Rooms";
 import Enrollment from "./Pages/Enrollment";
 import Transcripts from "./Pages/Transcripts";
 import CreateCourse from "./Pages/CreateCourse";
+import EditCourse from "./Pages/EditCourse";
 import CreateStudent from "./Pages/CreateStudent";
 import Materials from "./Pages/Materials";
+import Resources from "./Pages/Resources";
 import EmployeePortal from "./Pages/EmployeePortal";
 import Messages from "./Pages/Messages";
 
+import AdmissionApplication from "./Pages/AdmissionApplication";
+import ApproveApplications from "./Pages/ApproveApplications";
 
 import MainLayout from "./Layouts/MainLayout";
 import { useAuthContext } from "./hooks/useAuthContext";
@@ -35,6 +39,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/admission-application" element={<AdmissionApplication />} />
 
         <Route element={<MainLayout />}>
 
@@ -79,6 +84,15 @@ function App() {
           />
 
           <Route
+            path="/edit-course/:id"
+            element={
+              <PrivateRoute>
+                <EditCourse />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/create-student"
             element={<PrivateRoute><CreateStudent /></PrivateRoute>}
           />
@@ -97,6 +111,29 @@ function App() {
           <Route
             path="/messages"
             element={<PrivateRoute><Messages /></PrivateRoute>}
+            element={
+              <PrivateRoute>
+                <EmployeePortal />
+              </PrivateRoute>
+            }
+          />  
+
+          <Route
+            path="/resources"
+            element={
+              <PrivateRoute>
+                <Resources />
+              </PrivateRoute>
+            }
+          />  
+
+          <Route
+            path="/approve-applications"
+            element={
+              <PrivateRoute>
+                <ApproveApplications />
+              </PrivateRoute>
+            }
           />
 
         </Route>

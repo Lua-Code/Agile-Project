@@ -19,6 +19,25 @@ export const getAllCourses = async () => {
     .populate("prerequisites", "courseCode title");
 };
 
+export const getCourseById = async (id) => {
+  const course = await Course.findById(id)
+    .populate({
+      path: "professorId",
+      populate: {
+        path: "userId",
+        select: "fullName email",
+      },
+    })
+    .populate("prerequisites", "courseCode title");
+    
+  if (!course) {
+    const err = new Error("Course not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  return course;
+};
+
 export const createCourse = async (data) => {
   const {
     courseCode,
@@ -51,13 +70,17 @@ export const createCourse = async (data) => {
     type,
     creditHours,
     department,
-    professorId,
+    professorId: professorId || null,
     description,
     prerequisites,
   });
 };
 
 export const updateCourse = async (id, data) => {
+  if (data.professorId === "") {
+    data.professorId = null;
+  }
+
   const course = await Course.findByIdAndUpdate(id, data, {
     new: true,
   });

@@ -20,6 +20,15 @@ export const getCourses = async (req, res, next) => {
     }
 };
 
+export const getCourseById = async (req, res, next) => {
+    try {
+        const course = await courseService.getCourseById(req.params.id);
+        res.json(course);
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const createCourse = async (req, res, next) => {
     try {
         const course = await courseService.createCourse(req.body);

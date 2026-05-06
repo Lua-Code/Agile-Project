@@ -16,6 +16,8 @@ import UserRoutes from "./userRoutes.js";
 import materialRoutes from "./materialRoutes.js";
 import messageRoutes from "./messageRoutes.js";
 import messageUserRoutes from "./messageUserRoutes.js";
+import resourceRoutes from "./resourceRoutes.js";
+import admissionRoutes from "./admissionRoutes.js";
 
 router.use("/admin", adminRoutes);
 router.use("/announcements", announcementRoutes);
@@ -32,4 +34,7 @@ router.use("/users", UserRoutes);
 router.use("/materials", materialRoutes);
 router.use("/messages", messageRoutes);
 router.use("/message-users", messageUserRoutes);
+router.use("/resources", resourceRoutes);
+router.use("/admissions", admissionRoutes);
+
 export default router;
