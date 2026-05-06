@@ -61,6 +61,10 @@ function Login() {
         <button style={styles.button} type="submit" disabled={isLoading}>
           {isLoading ? "Logging in..." : "Login"}
         </button>
+
+        <button style={styles.admissionButton} type="button" onClick={() => navigate("/admission-application")}>
+          Apply for Admission
+        </button>
       </form>
     </div>
   );
@@ -155,6 +159,21 @@ const styles = {
     borderRadius: "12px",
     border: "none",
     background: "linear-gradient(135deg, #2563eb, #38bdf8)",
+    color: "#ffffff",
+    fontSize: "16px",
+    fontWeight: "700",
+    cursor: "pointer",
+    marginTop: "8px",
+    position: "relative",
+    zIndex: 3,
+  },
+
+  admissionButton: {
+    width: "100%",
+    padding: "15px",
+    borderRadius: "12px",
+    border: "none",
+    background: "#778da9",
     color: "#ffffff",
     fontSize: "16px",
     fontWeight: "700",

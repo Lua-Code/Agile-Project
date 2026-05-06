@@ -86,9 +86,16 @@ export default function Sidebar({ isOpen }) {
                             Manage Resources
                         </NavLink>
                     )}
+                    
                     {isProfessorOrTa && (
                         <NavLink to="/employee-portal" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             Employee Portal
+                        </NavLink>
+                    )}
+
+                    {(isAdmin) && (
+                        <NavLink to="/approve-applications" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Approve Applications
                         </NavLink>
                     )}
 
