@@ -1,262 +1,299 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuthContext } from '../hooks/useAuthContext';
+import { useEffect, useState } from "react";
+import api from "../Api/axios";
 
-const Enrollments = () => {
-  const { user } = useAuthContext();
-  
-  // Student View State
-  const [courses, setCourses] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState("all"); // "all" or "selected"
-  const [selectedCourseIds, setSelectedCourseIds] = useState(new Set());
-  const [showPopup, setShowPopup] = useState(false);
-
-  // Admin View State
+function Enrollments() {
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchEnrollments = async () => {
+    try {
+      const { data } = await api.get("/enrollments/requests", {
+        withCredentials: true,
+      });
+
+      setEnrollments(data || []);
+    } catch (err) {
+      console.error("Failed to fetch enrollments:", err.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (user?.role === "admin") {
-          const response = await axios.get('http://localhost:5000/api/enrollments', { withCredentials: true });
-          setEnrollments(response.data.data || []);
-        } else {
-          const response = await axios.get('http://localhost:5000/api/courses', { withCredentials: true });
-          setCourses(response.data.data || []);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [user]);
+    fetchEnrollments();
+  }, []);
 
-  // Student Handlers
-  const handleCheckboxChange = (courseId) => {
-    setSelectedCourseIds((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(courseId)) newSet.delete(courseId);
-      else newSet.add(courseId);
-      return newSet;
-    });
-  };
-
-  const handleEnrollSubmit = async () => {
-    if (selectedCourseIds.size === 0) return;
-    
+  const handleUpdateStatus = async (enrollmentId, status) => {
     try {
-      await axios.post('http://localhost:5000/api/enrollments', {
-        studentId: user?._id || user?.id,
-        courseIds: Array.from(selectedCourseIds),
-        semester: "Fall", // Could be dynamic
-        academicYear: "2026-2027" // Could be dynamic
-      }, { withCredentials: true });
-      
-      setShowPopup(true);
-      setSelectedCourseIds(new Set());
-      setTimeout(() => setShowPopup(false), 3000);
-    } catch (error) {
-      console.error("Error creating enrollments:", error);
-      alert("Failed to enroll. " + (error.response?.data?.message || ""));
+      await api.patch(
+        `/enrollments/${enrollmentId}/status`,
+        { status },
+        { withCredentials: true }
+      );
+
+      setEnrollments((prev) =>
+        prev.map((enrollment) =>
+          enrollment._id === enrollmentId
+            ? { ...enrollment, status }
+            : enrollment
+        )
+      );
+    } catch (err) {
+      console.error("Failed to update enrollment:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to update enrollment");
     }
   };
-
-  // Admin Handlers
-  const handleUpdateStatus = async (enrollmentId, newStatus) => {
-    try {
-      await axios.patch(`http://localhost:5000/api/enrollments/${enrollmentId}/status`, {
-        status: newStatus
-      }, { withCredentials: true });
-      
-      setEnrollments(prev => prev.map(enr => 
-        enr._id === enrollmentId ? { ...enr, status: newStatus } : enr
-      ));
-    } catch (error) {
-      console.error("Error updating status:", error);
-      alert("Failed to update status.");
-    }
-  };
-
-  if (loading) {
-    return <div className="min-h-screen bg-[#E0E1DD] p-8 font-sans text-[#0D1B2A]">Loading...</div>;
-  }
-
-  // --- ADMIN VIEW ---
-  if (user?.role === "admin") {
-    return (
-      <div className="min-h-screen bg-[#E0E1DD] p-8 font-sans text-[#0D1B2A]">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#0D1B2A] mb-4">Manage Enrollments</h1>
-        </div>
-
-        <div className="table-container">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="table-header">
-                <th className="p-4 font-semibold">Student</th>
-                <th className="p-4 font-semibold">Course</th>
-                <th className="p-4 font-semibold">Term</th>
-                <th className="p-4 font-semibold">Status</th>
-                <th className="p-4 font-semibold text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {enrollments.length > 0 ? (
-                enrollments.map((enr) => (
-                  <tr key={enr._id} className="table-row">
-                    <td className="p-4">
-                      <div className="font-medium text-[#1B263B]">
-                        {enr.studentId?.firstName} {enr.studentId?.lastName}
-                      </div>
-                      <div className="text-xs text-[#778DA9]">{enr.studentId?.studentIdNumber || "N/A"}</div>
-                    </td>
-                    <td className="p-4">
-                      <div className="font-medium text-[#1B263B]">{enr.courseId?.courseCode}</div>
-                      <div className="text-xs text-[#778DA9]">{enr.courseId?.title}</div>
-                    </td>
-                    <td className="p-4 text-[#778DA9]">{enr.semester} {enr.academicYear}</td>
-                    <td className="p-4">
-                      <span className={`badge-status-${enr.status}`}>
-                        {enr.status}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2 justify-center">
-                        {enr.status === "pending" && (
-                          <>
-                            <button onClick={() => handleUpdateStatus(enr._id, "enrolled")} className="btn-success">Approve</button>
-                            <button onClick={() => handleUpdateStatus(enr._id, "dropped")} className="btn-danger">Reject</button>
-                          </>
-                        )}
-                        {enr.status === "enrolled" && (
-                          <button onClick={() => handleUpdateStatus(enr._id, "dropped")} className="btn-danger">Drop</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="p-8 text-center text-[#778DA9]">
-                    No enrollments found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  }
-
-  // --- STUDENT VIEW ---
-  const filteredCourses = courses.filter((course) => {
-    const matchesSearch = 
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      course.courseCode.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilter = filter === "all" ? true : selectedCourseIds.has(course._id);
-
-    return matchesSearch && matchesFilter;
-  });
 
   return (
-    <div className="min-h-screen bg-[#E0E1DD] p-8 font-sans text-[#0D1B2A]">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#0D1B2A] mb-4">Enrollments</h1>
-        <input
-          type="text"
-          placeholder="Search courses by name or code..."
-          className="input-field"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-
-      <div className="flex gap-4 mb-6">
-        <button onClick={() => setFilter("all")} className={filter === "all" ? "btn-secondary-active" : "btn-secondary"}>
-          All Courses
-        </button>
-        <button onClick={() => setFilter("selected")} className={filter === "selected" ? "btn-secondary-active flex items-center gap-2" : "btn-secondary flex items-center gap-2"}>
-          Selected Courses
-          <span className="bg-[#415A77] text-[#E0E1DD] text-xs py-0.5 px-2 rounded-full">
-            {selectedCourseIds.size}
-          </span>
-        </button>
-      </div>
-
-      <div className="table-container">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="table-header">
-              <th className="p-4 w-16 text-center">Select</th>
-              <th className="p-4 font-semibold">Course Code</th>
-              <th className="p-4 font-semibold">Title</th>
-              <th className="p-4 font-semibold">Department</th>
-              <th className="p-4 font-semibold">Credits</th>
-              <th className="p-4 font-semibold">Type</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredCourses.length > 0 ? (
-              filteredCourses.map((course) => (
-                <tr key={course._id} className="table-row">
-                  <td className="p-4 text-center">
-                    <input
-                      type="checkbox"
-                      className="w-5 h-5 accent-[#415A77] cursor-pointer"
-                      checked={selectedCourseIds.has(course._id)}
-                      onChange={() => handleCheckboxChange(course._id)}
-                    />
-                  </td>
-                  <td className="p-4 font-medium text-[#1B263B]">{course.courseCode}</td>
-                  <td className="p-4">{course.title}</td>
-                  <td className="p-4 text-[#778DA9]">{course.department}</td>
-                  <td className="p-4 text-center">{course.creditHours}</td>
-                  <td className="p-4">
-                    <span className={course.type === 'core' ? 'badge-core' : 'badge-elective'}>
-                      {course.type || "N/A"}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="p-8 text-center text-[#778DA9]">
-                  No courses found matching your criteria.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-8 flex justify-end">
-        <button
-          onClick={handleEnrollSubmit}
-          disabled={selectedCourseIds.size === 0}
-          className="btn-primary"
-        >
-          Confirm Enrollment
-        </button>
-      </div>
-
-      {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-[#0D1B2A]/40 z-50">
-          <div className="bg-white p-8 rounded-xl shadow-xl max-w-sm w-full text-center border-t-4 border-[#415A77]">
-            <div className="text-4xl mb-4">✅</div>
-            <h2 className="text-2xl font-bold text-[#1B263B] mb-2">Enrollment Successful!</h2>
-            <p className="text-[#778DA9]">Your course selections have been submitted for approval.</p>
+    <div style={styles.page}>
+      <main style={styles.main}>
+        <section style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Enrollment Requests</h1>
+            <p style={styles.subtitle}>
+              Review and approve student course enrollment requests
+            </p>
           </div>
-        </div>
-      )}
+        </section>
+
+        <section style={styles.cards}>
+          <div style={styles.card}>
+            <p style={styles.cardLabel}>Total Requests</p>
+            <h2 style={styles.cardNumber}>{enrollments.length}</h2>
+          </div>
+
+          <div style={styles.card}>
+            <p style={styles.cardLabel}>Pending</p>
+            <h2 style={styles.cardNumber}>
+              {enrollments.filter((e) => e.status === "pending").length}
+            </h2>
+          </div>
+
+          <div style={styles.card}>
+            <p style={styles.cardLabel}>Approved</p>
+            <h2 style={styles.cardNumber}>
+              {enrollments.filter((e) => e.status === "approved").length}
+            </h2>
+          </div>
+        </section>
+
+        {loading && <p>Loading enrollment requests...</p>}
+
+        {!loading && (
+          <section style={styles.tableCard}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Student</th>
+                  <th style={styles.th}>Email</th>
+                  <th style={styles.th}>Course Code</th>
+                  <th style={styles.th}>Course Title</th>
+                  <th style={styles.th}>Department</th>
+                  <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {enrollments.length > 0 ? (
+                  enrollments.map((enrollment) => (
+                    <tr key={enrollment._id}>
+                      <td style={styles.td}>
+                        {enrollment.studentId?.userId?.fullName || "N/A"}
+                      </td>
+
+                      <td style={styles.td}>
+                        {enrollment.studentId?.userId?.email || "N/A"}
+                      </td>
+
+                      <td style={styles.td}>
+                        {enrollment.courseId?.courseCode || "N/A"}
+                      </td>
+
+                      <td style={styles.td}>
+                        {enrollment.courseId?.title || "N/A"}
+                      </td>
+
+                      <td style={styles.td}>
+                        {enrollment.courseId?.department || "N/A"}
+                      </td>
+
+                      <td style={styles.td}>
+                        <span
+                          style={{
+                            ...styles.status,
+                            ...(enrollment.status === "approved"
+                              ? styles.approvedStatus
+                              : enrollment.status === "rejected"
+                              ? styles.rejectedStatus
+                              : styles.pendingStatus),
+                          }}
+                        >
+                          {enrollment.status}
+                        </span>
+                      </td>
+
+                      <td style={styles.td}>
+                        <button
+                          style={{
+                            ...styles.approveButton,
+                            ...(enrollment.status !== "pending"
+                              ? styles.disabledButton
+                              : {}),
+                          }}
+                          disabled={enrollment.status !== "pending"}
+                          onClick={() =>
+                            handleUpdateStatus(enrollment._id, "approved")
+                          }
+                        >
+                          Approve
+                        </button>
+
+                        <button
+                          style={{
+                            ...styles.rejectButton,
+                            ...(enrollment.status !== "pending"
+                              ? styles.disabledButton
+                              : {}),
+                          }}
+                          disabled={enrollment.status !== "pending"}
+                          onClick={() =>
+                            handleUpdateStatus(enrollment._id, "rejected")
+                          }
+                        >
+                          Reject
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td style={styles.td} colSpan="7">
+                      No enrollment requests found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </section>
+        )}
+      </main>
     </div>
   );
+}
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    display: "flex",
+    background: "#f8fafc",
+    fontFamily: "Arial, sans-serif",
+  },
+  main: {
+    flex: 1,
+    padding: "36px",
+  },
+  header: {
+    marginBottom: "28px",
+  },
+  title: {
+    margin: 0,
+    fontSize: "38px",
+    color: "#0f172a",
+  },
+  subtitle: {
+    marginTop: "8px",
+    color: "#64748b",
+    fontSize: "16px",
+  },
+  cards: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "22px",
+    marginBottom: "24px",
+  },
+  card: {
+    background: "#ffffff",
+    padding: "24px",
+    borderRadius: "20px",
+    boxShadow: "0 15px 35px rgba(15, 23, 42, 0.08)",
+    border: "1px solid #e2e8f0",
+  },
+  cardLabel: {
+    margin: 0,
+    color: "#64748b",
+    fontWeight: "600",
+  },
+  cardNumber: {
+    margin: "12px 0 0",
+    fontSize: "34px",
+    color: "#0f172a",
+  },
+  tableCard: {
+    background: "#ffffff",
+    borderRadius: "22px",
+    padding: "24px",
+    boxShadow: "0 15px 35px rgba(15, 23, 42, 0.08)",
+    overflowX: "auto",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+  },
+  th: {
+    textAlign: "center",
+    padding: "16px",
+    color: "#475569",
+    borderBottom: "1px solid #e2e8f0",
+  },
+  td: {
+    padding: "16px",
+    borderBottom: "1px solid #e2e8f0",
+    textAlign: "center",
+  },
+  status: {
+    padding: "6px 12px",
+    borderRadius: "999px",
+    fontWeight: "700",
+    fontSize: "13px",
+    display: "inline-block",
+    textTransform: "capitalize",
+  },
+  pendingStatus: {
+    background: "#fef3c7",
+    color: "#92400e",
+  },
+  approvedStatus: {
+    background: "#dcfce7",
+    color: "#15803d",
+  },
+  rejectedStatus: {
+    background: "#fee2e2",
+    color: "#b91c1c",
+  },
+  approveButton: {
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "none",
+    background: "#dcfce7",
+    color: "#15803d",
+    fontWeight: "700",
+    cursor: "pointer",
+    marginRight: "8px",
+  },
+  rejectButton: {
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "none",
+    background: "#fee2e2",
+    color: "#b91c1c",
+    fontWeight: "700",
+    cursor: "pointer",
+  },
+  disabledButton: {
+    opacity: 0.5,
+    cursor: "not-allowed",
+  },
 };
 
 export default Enrollments;

@@ -262,22 +262,6 @@ function CourseCatalog() {
 
                           {isStudent && (
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              {status && (
-                                <span
-                                  style={{
-                                    fontSize: "13px",
-                                    fontWeight: "bold",
-                                    color:
-                                      status === "approved"
-                                        ? "#15803d"
-                                        : status === "rejected"
-                                        ? "#b91c1c"
-                                        : "#b45309",
-                                  }}
-                                >
-                                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                                </span>
-                              )}
                               <button
                                 style={{
                                   ...styles.enrollButton,
@@ -288,7 +272,14 @@ function CourseCatalog() {
                                 disabled={!canEnroll}
                                 onClick={() => handleEnroll(course.id)}
                               >
-                                {status === "rejected" ? "Enroll Again" : (canEnroll ? "Enroll" : "Requested")}
+                                {status === "approved"
+                                  ? "Enrolled"
+                                  : status === "pending"
+                                  ? "Requested"
+                                  : status === "rejected"
+                                  ? "Enroll Again"
+                                  : "Enroll"
+                                }
                               </button>
                             </div>
                           )}

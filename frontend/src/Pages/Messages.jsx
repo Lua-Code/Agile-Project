@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuthContext } from "../hooks/useAuthContext";
+import api from "../Api/axios";
 
 function Messages() {
     const { user } = useAuthContext();
@@ -13,24 +14,25 @@ function Messages() {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
 
-    const oppositeRole = currentRole === "student" ? "professor" : "student";
+    const oppositeRole =
+        currentRole === "student"
+            ? "professor"
+            : currentRole === "professor" || currentRole === "ta"
+                ? "student"
+                : "";
 
     useEffect(() => {
         const fetchUsers = async () => {
             if (!oppositeRole) return;
 
             try {
-                const res = await fetch(
-                    `http://localhost:5000/api/message-users/${oppositeRole}`
-                );
+                const { data } = await api.get(`/message-users/${oppositeRole}`, {
+                    withCredentials: true,
+                });
 
-                const data = await res.json();
-
-                if (data.success) {
-                    setUsers(data.data);
-                }
+                if (data.success) setUsers(data.data);
             } catch (error) {
-                console.error("Failed to fetch users:", error);
+                console.error("Failed to fetch users:", error.response?.data || error.message);
             }
         };
 
@@ -41,25 +43,20 @@ function Messages() {
         if (!currentUser || !selectedUserName) return;
 
         try {
-            const res = await fetch(
-                `http://localhost:5000/api/messages/conversation/${currentUser}/${selectedUserName}`
+            const { data } = await api.get(
+                `/messages/conversation/${encodeURIComponent(currentUser)}/${encodeURIComponent(selectedUserName)}`,
+                { withCredentials: true }
             );
 
-            const data = await res.json();
-
-            if (data.success) {
-                setMessages(data.data);
-            }
+            if (data.success) setMessages(data.data);
         } catch (error) {
-            console.error("Failed to fetch conversation:", error);
+            console.error("Failed to fetch conversation:", error.response?.data || error.message);
         }
     };
 
     useEffect(() => {
         fetchConversation();
-
         const interval = setInterval(fetchConversation, 3000);
-
         return () => clearInterval(interval);
     }, [currentUser, selectedUserName]);
 
@@ -69,12 +66,7 @@ function Messages() {
         setMessages([]);
 
         const chosenUser = users.find((u) => u._id === userId);
-
-        if (chosenUser) {
-            setSelectedUserName(chosenUser.fullName || chosenUser.email);
-        } else {
-            setSelectedUserName("");
-        }
+        setSelectedUserName(chosenUser?.fullName || chosenUser?.email || "");
     };
 
     const handleSend = async (e) => {
@@ -83,132 +75,261 @@ function Messages() {
         if (!message.trim() || !selectedUserName) return;
 
         try {
-            const res = await fetch("http://localhost:5000/api/messages/send", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
+            const { data } = await api.post(
+                "/messages/send",
+                {
                     sender: currentUser,
                     senderRole: currentRole,
                     receiver: selectedUserName,
                     receiverRole: oppositeRole,
                     message,
-                }),
-            });
-
-            const data = await res.json();
+                },
+                { withCredentials: true }
+            );
 
             if (data.success) {
                 setMessage("");
                 fetchConversation();
             }
         } catch (error) {
-            console.error("Failed to send message:", error);
+            console.error("Failed to send message:", error.response?.data || error.message);
         }
     };
 
-    if (!user) return <p className="p-6">Loading...</p>;
+    if (!user) return <p style={{ padding: "36px" }}>Loading...</p>;
 
     return (
-        <div className="min-h-screen bg-[#e0e1dd] p-6">
-            <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-[#1b263b] mb-2 text-center">
-                    Messages
-                </h2>
-
-                <p className="mb-2 text-[#415a77] text-center">
-                    Logged in as: <strong>{currentRole}</strong>
-                </p>
-
-                <div className="mb-5">
-                    <label className="block mb-2 font-medium text-[#415a77] text-center">
-                        {currentRole === "student" ? "Choose Professor" : "Choose Student"}
-                    </label>
-
-                    <select
-                        value={selectedUser}
-                        onChange={handleUserSelect}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                    >
-                        <option value="">Select user</option>
-
-                        {users.map((person) => (
-                            <option key={person._id} value={person._id}>
-                                {person.fullName || person.email}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="h-96 overflow-y-auto border border-[#415a77] rounded-lg p-4 bg-gray-50 mb-5">
-                    {!selectedUserName ? (
-                        <p className="text-gray-500 text-center">
-                            Select a user to start chatting.
+        <div style={styles.page}>
+            <main style={styles.main}>
+                <section style={styles.header}>
+                    <div>
+                        <h1 style={styles.title}>Messages</h1>
+                        <p style={styles.subtitle}>
+                            Communicate with {currentRole === "student" ? "professors" : "students"}
                         </p>
-                    ) : messages.length === 0 ? (
-                        <p className="text-gray-500 text-center">No messages yet.</p>
-                    ) : (
-                        messages.map((msg) => {
-                            const isMine = msg.sender === currentUser;
+                    </div>
+                </section>
 
-                            return (
-                                <div
-                                    key={msg._id}
-                                    className={`mb-3 p-3 rounded-lg max-w-md ${isMine ? "ml-auto" : "mr-auto"
-                                        }`}
-                                    style={{
-                                        backgroundColor: isMine ? "#415a77" : "#ffffff",
-                                        color: isMine ? "#ffffff" : "#1b263b",
-                                        border: isMine ? "none" : "1px solid #1b263b",
-                                    }}
-                                >
-                                    <p style={{ color: isMine ? "#ffffff" : "#1b263b", fontWeight: "600" }}>
-                                        {msg.sender}
-                                    </p>
+                <section style={styles.formCard}>
+                    <div style={styles.field}>
+                        <label style={styles.label}>
+                            {currentRole === "student" ? "Choose Professor" : "Choose Student"}
+                        </label>
 
-                                    <p style={{ color: isMine ? "#ffffff" : "#1b263b" }}>
-                                        {msg.message}
-                                    </p>
+                        <select
+                            value={selectedUser}
+                            onChange={handleUserSelect}
+                            style={styles.input}
+                        >
+                            <option value="">Select user</option>
+                            {users.map((person) => (
+                                <option key={person._id} value={person._id}>
+                                    {person.fullName || person.email}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </section>
 
-                                    <p
+                <section style={styles.chatCard}>
+                    <div style={styles.chatHeader}>
+                        <h2 style={styles.sectionTitle}>
+                            {selectedUserName || "Conversation"}
+                        </h2>
+                        <span style={styles.roleBadge}>{currentRole}</span>
+                    </div>
+
+                    <div style={styles.messagesBox}>
+                        {!selectedUserName ? (
+                            <p style={styles.emptyText}>Select a user to start chatting.</p>
+                        ) : messages.length === 0 ? (
+                            <p style={styles.emptyText}>No messages yet.</p>
+                        ) : (
+                            messages.map((msg) => {
+                                const isMine = msg.sender === currentUser;
+
+                                return (
+                                    <div
+                                        key={msg._id}
                                         style={{
-                                            color: isMine ? "#e5e7eb" : "#64748b",
-                                            fontSize: "12px",
-                                            marginTop: "4px",
+                                            ...styles.messageBubble,
+                                            ...(isMine ? styles.myMessage : styles.theirMessage),
                                         }}
                                     >
-                                        {new Date(msg.createdAt).toLocaleString()}
-                                    </p>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
+                                        <p
+                                            style={{
+                                                ...styles.messageSender,
+                                                color: isMine ? "#ffffff" : "#1b263b",
+                                            }}
+                                        >
+                                            {msg.sender}
+                                        </p>
 
-                <form onSubmit={handleSend} className="flex gap-3">
-                    <input
-                        type="text"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder={
-                            selectedUserName ? "Type your message..." : "Select a user first..."
-                        }
-                        disabled={!selectedUserName}
-                        className="flex-1 border border-gray-300 rounded-lg px-4 py-2"
-                    />
+                                        <p
+                                            style={{
+                                                ...styles.messageText,
+                                                color: isMine ? "#e0e1dd" : "#334155",
+                                            }}
+                                        >
+                                            {msg.message}
+                                        </p>
 
-                    <button
-                        type="submit"
-                        disabled={!selectedUserName}
-                        className="bg-[#415a77] hover:bg-[#1b263b] text-white px-6 py-2 rounded-lg disabled:opacity-50"
-                    >
-                        Send
-                    </button>
-                </form>
-            </div>
+                                        <p
+                                            style={{
+                                                ...styles.messageTime,
+                                                color: isMine ? "#cbd5e1" : "#64748b",
+                                            }}
+                                        >
+                                            {new Date(msg.createdAt).toLocaleString()}
+                                        </p>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+
+                    <form onSubmit={handleSend} style={styles.sendForm}>
+                        <input
+                            type="text"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder={
+                                selectedUserName ? "Type your message..." : "Select a user first..."
+                            }
+                            disabled={!selectedUserName}
+                            style={styles.messageInput}
+                        />
+
+                        <button
+                            type="submit"
+                            disabled={!selectedUserName}
+                            style={{
+                                ...styles.primaryButton,
+                                ...(!selectedUserName ? styles.disabledButton : {}),
+                            }}
+                        >
+                            Send
+                        </button>
+                    </form>
+                </section>
+            </main>
         </div>
     );
 }
+
+const styles = {
+    page: {
+        minHeight: "100vh",
+        display: "flex",
+        background: "#f8fafc",
+        fontFamily: "Arial, sans-serif",
+    },
+    main: {
+        flex: 1,
+        padding: "36px",
+    },
+    header: { marginBottom: "28px" },
+    title: { margin: 0, fontSize: "38px", color: "#0f172a" },
+    subtitle: { marginTop: "8px", color: "#64748b" },
+
+    formCard: {
+        background: "#fff",
+        borderRadius: "22px",
+        padding: "24px",
+        marginBottom: "24px",
+        boxShadow: "0 15px 35px rgba(15,23,42,0.08)",
+        border: "1px solid #e2e8f0",
+    },
+
+    field: { display: "flex", flexDirection: "column", gap: "8px" },
+    label: { fontWeight: "700", color: "#475569" },
+    input: {
+        padding: "13px",
+        borderRadius: "12px",
+        border: "1px solid #cbd5e1",
+    },
+
+    chatCard: {
+        background: "#fff",
+        borderRadius: "22px",
+        padding: "24px",
+        boxShadow: "0 15px 35px rgba(15,23,42,0.08)",
+    },
+
+    chatHeader: {
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: "18px",
+    },
+
+    sectionTitle: { fontSize: "22px", color: "#0f172a" },
+
+    roleBadge: {
+        background: "#dbeafe",
+        padding: "6px 12px",
+        borderRadius: "999px",
+        fontWeight: "700",
+    },
+
+    messagesBox: {
+        height: "420px",
+        overflowY: "auto",
+        border: "1px solid #e2e8f0",
+        borderRadius: "16px",
+        padding: "18px",
+        marginBottom: "18px",
+    },
+
+    emptyText: { textAlign: "center", color: "#64748b", marginTop: "160px" },
+
+    messageBubble: {
+        maxWidth: "520px",
+        padding: "12px 16px",
+        borderRadius: "14px",
+        marginBottom: "12px",
+        textAlign: "left",
+    },
+
+    myMessage: {
+        marginLeft: "auto",
+        background: "#1b263b",
+        color: "#ffffff",
+        border: "none",
+    },
+
+    theirMessage: {
+        marginRight: "auto",
+        background: "#f8fafc",
+        color: "#0f172a",
+        border: "1px solid #cbd5e1",
+    },
+
+    messageSender: { fontWeight: "700" },
+    messageText: {},
+    messageTime: { fontSize: "12px", opacity: 0.7 },
+
+    sendForm: { display: "flex", gap: "12px" },
+
+    messageInput: {
+        flex: 1,
+        padding: "13px",
+        borderRadius: "12px",
+        border: "1px solid #cbd5e1",
+    },
+
+    primaryButton: {
+        padding: "12px 24px",
+        borderRadius: "12px",
+        border: "none",
+        background: "linear-gradient(135deg, #2563eb, #38bdf8)",
+        color: "#fff",
+        fontWeight: "700",
+    },
+
+    disabledButton: {
+        opacity: 0.5,
+        cursor: "not-allowed",
+    },
+};
 
 export default Messages;

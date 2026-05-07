@@ -1,4 +1,5 @@
 import AdmissionApplication from "../models/AdmissionApplication.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 export const createAdmissionApplicationService = async (data) => {
   const {
@@ -40,7 +41,12 @@ export const getAdmissionApplicationsService = async () => {
   return await AdmissionApplication.find().sort({ createdAt: -1 });
 };
 
-export const updateAdmissionStatusService = async (applicationId, status, adminUserId, reviewNote = "") => {
+export const updateAdmissionStatusService = async (
+  applicationId,
+  status,
+  adminUserId,
+  reviewNote = ""
+) => {
   if (!["accepted", "rejected"].includes(status)) {
     const error = new Error("Invalid application status");
     error.statusCode = 400;
@@ -67,6 +73,39 @@ export const updateAdmissionStatusService = async (applicationId, status, adminU
   application.reviewNote = reviewNote;
 
   await application.save();
+
+  const emailSubject =
+    status === "accepted"
+      ? "University Admission Accepted"
+      : "University Admission Update";
+
+  const emailText =
+    status === "accepted"
+      ? `Dear ${application.fullName},
+
+Congratulations! Your admission application has been accepted.
+
+Program: ${application.program}
+Department: ${application.department}
+
+Please wait for further onboarding instructions.
+
+University Administration`
+      : `Dear ${application.fullName},
+
+We regret to inform you that your admission application has been rejected.
+
+${reviewNote ? `Reason: ${reviewNote}` : ""}
+
+Thank you for applying.
+
+University Administration`;
+
+  await sendEmail({
+    to: application.email,
+    subject: emailSubject,
+    text: emailText,
+  });
 
   return application;
 };

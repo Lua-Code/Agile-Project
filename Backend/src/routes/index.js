@@ -37,4 +37,5 @@ router.use("/message-users", messageUserRoutes);
 router.use("/resources", resourceRoutes);
 router.use("/admissions", admissionRoutes);
 
+
 export default router;

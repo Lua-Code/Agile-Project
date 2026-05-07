@@ -5,11 +5,22 @@ import api from "../Api/axios";
 function Dashboard() {
   const { user } = useAuthContext();
   const isAdmin = user?.role === "admin";
+  const isStudent = user?.role === "student";
+  const isProfessorOrTa = user?.role === "professor" || user?.role === "ta";
 
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
+  const [studentSummary, setStudentSummary] = useState({
+    gpa: "—",
+    completedCredits: "—",
+  });
+  const [professorSummary, setProfessorSummary] = useState({
+    courses: "—",
+    bookings: "—",
+    materials: "—",
+  });
 
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
@@ -19,13 +30,66 @@ function Dashboard() {
   useEffect(() => {
     api.get("/admin/stats", { withCredentials: true })
       .then((res) => setStats(res.data))
-      .catch(() => {});
+      .catch(() => { });
 
     api
       .get("/announcements", { withCredentials: true })
       .then((res) => setAnnouncements(res.data))
       .catch(() => setError("Failed to load announcements."))
       .finally(() => setLoading(false));
+
+    if (user?.role === "student") {
+      api
+        .get("/student-records/transcripts", { withCredentials: true })
+        .then((res) => {
+          const transcripts = res.data.transcripts || [];
+
+          const totalCredits = transcripts.reduce((sum, record) => {
+            return (
+              sum +
+              (record.grades || []).reduce(
+                (gradeSum, grade) => gradeSum + (grade.creditHours || 0),
+                0
+              )
+            );
+          }, 0);
+
+          const weightedGpaSum = transcripts.reduce((sum, record) => {
+            const recordCredits = (record.grades || []).reduce(
+              (gradeSum, grade) => gradeSum + (grade.creditHours || 0),
+              0
+            );
+
+            return sum + (record.gpa || 0) * recordCredits;
+          }, 0);
+
+          const overallGpa =
+            totalCredits > 0 ? (weightedGpaSum / totalCredits).toFixed(2) : "—";
+
+          setStudentSummary({
+            gpa: overallGpa,
+            completedCredits: totalCredits,
+          });
+        })
+        .catch(() => { });
+
+    }
+
+    if (user?.role === "professor" || user?.role === "ta") {
+      Promise.all([
+        api.get("/courses/my-courses", { withCredentials: true }),
+        api.get("/bookings", { withCredentials: true }),
+        api.get("/materials", { withCredentials: true }),
+      ])
+        .then(([coursesRes, bookingsRes, materialsRes]) => {
+          setProfessorSummary({
+            courses: coursesRes.data.courses?.length || 0,
+            bookings: bookingsRes.data.bookings?.length || 0,
+            materials: materialsRes.data.materials?.length || 0,
+          });
+        })
+        .catch(() => { });
+    }
   }, []);
 
   const handleAdd = async (e) => {
@@ -76,7 +140,7 @@ function Dashboard() {
           </div>
         </header>
 
-        <section style={styles.cards}>
+        {isAdmin && (<section style={styles.cards}>
           <div style={styles.card}>
             <p style={styles.cardLabel}>Total Students</p>
             <h2 style={styles.cardNumber}>{stats ? stats.totalStudents : "—"}</h2>
@@ -90,10 +154,54 @@ function Dashboard() {
             <h2 style={styles.cardNumber}>{stats ? stats.availableRooms : "—"}</h2>
           </div>
           <div style={styles.card}>
-            <p style={styles.cardLabel}>Enrollments</p>
+            <p style={styles.cardLabel}>Requested Enrollments</p>
             <h2 style={styles.cardNumber}>{stats ? stats.totalEnrollments : "—"}</h2>
           </div>
-        </section>
+        </section>)
+        }
+
+        {isStudent && (
+          <section style={styles.cards}>
+            <div style={styles.card}>
+              <p style={styles.cardLabel}>Current GPA</p>
+              <h2 style={styles.cardNumber}>{studentSummary.gpa}</h2>
+            </div>
+
+            <div style={styles.card}>
+              <p style={styles.cardLabel}>Completed Credit Hours</p>
+              <h2 style={styles.cardNumber}>{studentSummary.completedCredits}</h2>
+            </div>
+
+            <div style={styles.card}>
+              <p style={styles.cardLabel}>Academic Standing</p>
+              <h2 style={styles.cardNumber}>
+                {studentSummary.gpa !== "—" && Number(studentSummary.gpa) >= 2
+                  ? "Good"
+                  : "—"}
+              </h2>
+            </div>
+          </section>
+        )}
+
+        {isProfessorOrTa && (
+          <section style={styles.cards}>
+            <div style={styles.card}>
+              <p style={styles.cardLabel}>Assigned Courses</p>
+              <h2 style={styles.cardNumber}>{professorSummary.courses}</h2>
+            </div>
+
+            <div style={styles.card}>
+              <p style={styles.cardLabel}>Room Bookings</p>
+              <h2 style={styles.cardNumber}>{professorSummary.bookings}</h2>
+            </div>
+
+            <div style={styles.card}>
+              <p style={styles.cardLabel}>Uploaded Materials</p>
+              <h2 style={styles.cardNumber}>{professorSummary.materials}</h2>
+            </div>
+          </section>
+        )}
+
 
         <section style={styles.announcementsSection}>
           <div style={styles.announcementsHeader}>

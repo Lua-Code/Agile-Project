@@ -65,13 +65,13 @@ export default function Sidebar({ isOpen }) {
 
                     {(isAdmin) && (
                         <NavLink to="/students" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                            View Student Records
+                            View All Students
                         </NavLink>)
                     }
 
                     {(!isProfessorOrTa) && (
                         <NavLink to="/transcripts" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                            {isAdmin ? "View Transcripts" : "Request Transcripts"}
+                            {isAdmin ? "View Student Records" : "My Transcript"}
                         </NavLink>)
                     }
 

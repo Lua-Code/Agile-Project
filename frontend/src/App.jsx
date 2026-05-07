@@ -16,6 +16,7 @@ import Materials from "./Pages/Materials";
 import Resources from "./Pages/Resources";
 import EmployeePortal from "./Pages/EmployeePortal";
 import Messages from "./Pages/Messages";
+import Profile from "./Pages/Profile";
 
 import AdmissionApplication from "./Pages/AdmissionApplication";
 import ApproveApplications from "./Pages/ApproveApplications";
@@ -111,11 +112,6 @@ function App() {
           <Route
             path="/messages"
             element={<PrivateRoute><Messages /></PrivateRoute>}
-            element={
-              <PrivateRoute>
-                <EmployeePortal />
-              </PrivateRoute>
-            }
           />  
 
           <Route
@@ -132,6 +128,15 @@ function App() {
             element={
               <PrivateRoute>
                 <ApproveApplications />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Profile />
               </PrivateRoute>
             }
           />
