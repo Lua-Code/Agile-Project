@@ -4,8 +4,6 @@ export const getTranscripts = async (req, res) => {
     try {
         const transcripts = await getTranscriptsService(req.session.user);
 
-        console.log("Transcripts fetched successfully:", transcripts);
-
         res.status(200).json({ 
             message: "Transcripts fetched successfully",
             transcripts });

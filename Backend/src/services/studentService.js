@@ -46,7 +46,16 @@ export const createStudent = async (data) => {
     status: status || "active",
   });
 
-  return { user, student };
+  const studentRecord = await StudentRecord.create({
+    studentId: student._id,
+    academicYear: "2025-2026",
+    semester: "Fall",
+    grades: [],
+    gpa: 0,
+    status: "in-progress",
+  });
+
+  return { user, student, studentRecord };
 };
 
 // GET ALL STUDENTS

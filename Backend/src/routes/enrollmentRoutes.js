@@ -1,4 +1,4 @@
-
+import express from "express";
 import { requestEnrollment, getEnrollmentRequests, getMyEnrollmentRequests, updateEnrollmentStatus,createEnrollments,getEnrollments } from "../controllers/enrollmentController.js";
 import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 const router = express.Router();

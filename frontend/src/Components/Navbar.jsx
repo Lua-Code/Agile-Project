@@ -11,7 +11,6 @@ export default function Navbar({ toggleSidebar }) {
       <div className="w-full px-6 mx-auto py-4">
         <div className="flex items-center justify-between">
 
-          {/* LEFT SIDE */}
           <div className="flex items-center gap-8">
             <Menu
               className="h-5 w-5 text-[#1d3557] hover:text-[#457b9d] cursor-pointer"
@@ -22,7 +21,6 @@ export default function Navbar({ toggleSidebar }) {
               myPortal
             </Link>
 
-            {/* ✅ ADD MESSAGES LINK */}
             <div className="hidden md:flex items-center gap-6">
               <Link
                 to="/messages"
@@ -34,7 +32,6 @@ export default function Navbar({ toggleSidebar }) {
             </div>
           </div>
 
-          {/* RIGHT SIDE */}
           <div className="flex items-center gap-4">
             <Bell className="h-5 w-5 text-[#1d3557] hover:text-[#457b9d] cursor-pointer" />
 

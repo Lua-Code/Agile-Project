@@ -24,7 +24,7 @@ function Materials() {
         const coursesRes = await api.get("/courses/my-courses", {
           withCredentials: true,
         });
-
+        console.log("Fetched courses:", coursesRes.data.courses);
         setCourses(coursesRes.data.courses || []);
 
         const materialsRes = await api.get("/materials", {
@@ -32,6 +32,7 @@ function Materials() {
         });
 
         setMaterials(materialsRes.data.materials || []);
+
       } catch (err) {
         console.error(err);
       }
