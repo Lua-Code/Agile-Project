@@ -7,22 +7,10 @@ dotenv.config();
 
 const users = [
   {
-    fullName: "Ali Hatem",
-    email: "ali.tahssin@gmail.com",
-    password: "13030555a",
-    role: "student",
-  },
-  {
-    fullName: "Kevin David",
-    email: "lua-code@gmail.com",
-    password: "1234567890",
-    role: "professor",
-  },
-  {
-    fullName: "Zeyad Abdelmageed",
-    email: "zeko@gmail.com",
-    password: "meligy3ars",
-    role: "admin",
+    fullName: "Fady Osama",
+    email: "fady.osama@fis.com",
+    password: "12345678",
+    role: "parent",
   },
 ];
 

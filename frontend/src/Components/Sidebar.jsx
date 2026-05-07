@@ -29,6 +29,7 @@ export default function Sidebar({ isOpen }) {
     const isStudent = role === "student";
     const isProfessorOrTa = role === "professor" || role === "ta";
     const isEmployee = role === "employee";
+    const isParent = role === "parent";
 
     return (
         <aside
@@ -47,55 +48,62 @@ export default function Sidebar({ isOpen }) {
                     <NavLink to="/dashboard" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                         Dashboard
                     </NavLink>
-
-                    <NavLink to="/courses" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        Courses
-                    </NavLink>
-
-                    <NavLink to="/rooms" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
-                        Rooms
-                    </NavLink>
-
+                    {(!isParent) && (
+                        <NavLink to="/courses" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Courses
+                        </NavLink>
+                    )}
+                    {(!isParent) && (
+                        <NavLink to="/rooms" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            Rooms
+                        </NavLink>
+                    )}
                     {
-                        (isAdmin || isStudent) && (
+                        (isAdmin || isStudent) && (!isParent) && (
                             <NavLink to="/enrollments" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                                 {isAdmin ? "View Enrollment Requests" : "My Enrollments"}
                             </NavLink>)
                     }
 
-                    {(isAdmin) && (
+                    {(isAdmin) && (!isParent) && (
                         <NavLink to="/students" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             View All Students
                         </NavLink>)
                     }
 
-                    {(!isProfessorOrTa) && (
+                    {(!isProfessorOrTa) && (!isParent) && (
                         <NavLink to="/transcripts" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             {isAdmin ? "View Student Records" : "My Transcript"}
                         </NavLink>)
                     }
 
-                    {(!isAdmin) && (
+                    {(!isAdmin) && (!isParent) && (
                         <NavLink to="/materials" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             {isProfessorOrTa ? "Upload Course Materials" : "View Course Materials"}
                         </NavLink>
                     )}
 
-                    {(isAdmin) && (
+                    {(isAdmin) && (!isParent) && (
                         <NavLink to="/resources" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             Manage Resources
                         </NavLink>
                     )}
                     
-                    {isProfessorOrTa && (
+                    {isProfessorOrTa && (!isParent) && (
                         <NavLink to="/employee-portal" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             Employee Portal
                         </NavLink>
                     )}
 
-                    {(isAdmin) && (
+                    {(isAdmin) && (!isParent) && (
                         <NavLink to="/approve-applications" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
                             Approve Applications
+                        </NavLink>
+                    )}
+
+                    {isParent && (
+                        <NavLink to="/student-progress" style={({ isActive }) => isActive ? styles.activeLink : styles.link}>
+                            My Child's Progress
                         </NavLink>
                     )}
 

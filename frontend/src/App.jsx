@@ -17,6 +17,7 @@ import Resources from "./Pages/Resources";
 import EmployeePortal from "./Pages/EmployeePortal";
 import Messages from "./Pages/Messages";
 import Profile from "./Pages/Profile";
+import StudentProgress from "./Pages/StudentProgress";
 
 import AdmissionApplication from "./Pages/AdmissionApplication";
 import ApproveApplications from "./Pages/ApproveApplications";
@@ -137,6 +138,15 @@ function App() {
             element={
               <PrivateRoute>
                 <Profile />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/student-progress"
+            element={
+              <PrivateRoute>
+                <StudentProgress />
               </PrivateRoute>
             }
           />
